@@ -1,0 +1,19 @@
+{
+  "created_at": "2026-11-05T11:57:31Z",
+  "description": "用真实的多文件静态站 zip 验证方式 B，含 css/js，且外面套了一层目录。",
+  "file_count": 20,
+  "issue": 2,
+  "size_bytes": 3143607,
+  "slug": "focus-zip",
+  "source": {
+    "type": "zip",
+    "url": "https://codeload.github.com/Kibiandkimi/focus/zip/refs/heads/main"
+  },
+  "status": "active",
+  "tags": [
+    "测试",
+    "多文件"
+  ],
+  "title": "Focus 计时器（压缩包方式测试）",
+  "updated_at": "2026-11-05T11:57:31Z"
+}
