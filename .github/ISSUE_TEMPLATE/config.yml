@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用说明
+    url: https://github.com/Kibiandkimi/web-pages#readme
+    about: 先看看 README，了解三种提交方式和可用命令

@@ -1,0 +1,97 @@
+name: Deploy pages
+
+# 提 issue → 自动部署到 GitHub Pages
+# 详见 README.md
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled]
+  issue_comment:
+    types: [created]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一时间只跑一个部署，避免并发 push 打架
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write # 需要把 sites/ 和 .meta/ 提交回 main
+  issues: write # 需要回评 issue
+  pages: write # 部署 Pages
+  id-token: write # deploy-pages 走 OIDC
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          # 用 PAT（如果配置了 DEPLOY_TOKEN）可以触发下游 workflow；
+          # 否则用默认 token，够用。
+          token: ${{ secrets.DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: 准备 Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: 解析事件
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/handle_event.py
+
+      - name: 提交内容变更
+        if: steps.plan.outputs.changed == 'true'
+        env:
+          COMMIT_MSG: >-
+            sites: ${{ steps.plan.outputs.action }} ${{ steps.plan.outputs.slug }}
+            (issue #${{ github.event.issue.number }})
+        run: bash scripts/commit_push.sh
+
+      - name: 构建站点
+        if: steps.plan.outputs.should_deploy == 'true'
+        run: python3 scripts/build_site.py
+
+      - name: 上传 Pages 产物
+        if: steps.plan.outputs.should_deploy == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+          include-hidden-files: true
+
+      - name: 部署到 GitHub Pages
+        id: deployment
+        if: steps.plan.outputs.should_deploy == 'true'
+        uses: actions/deploy-pages@v5
+
+      - name: 回评 issue
+        if: always() && steps.plan.outputs.comment_file != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_FILE: ${{ steps.plan.outputs.comment_file }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "${ISSUE_NUMBER}" ] || [ ! -f "${COMMENT_FILE}" ]; then
+            echo "无需回评（issue 号为空或没有评论内容）"
+            exit 0
+          fi
+          jq -Rs '{body: .}' "${COMMENT_FILE}" \
+            | gh api "repos/${REPO}/issues/${ISSUE_NUMBER}/comments" --input - \
+            > /dev/null
+          echo "已回评 issue #${ISSUE_NUMBER}"
+
+      - name: 标记失败
+        if: always() && steps.plan.outputs.status == 'failed'
+        run: |
+          echo "::error::部署失败，详见上方日志与 issue 中的回评。"
+          exit 1

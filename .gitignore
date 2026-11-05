@@ -1,0 +1,13 @@
+# 构建产物
+_site/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# 临时文件
+sites/.build-*
+*.tmp
+.DS_Store
+Thumbs.db

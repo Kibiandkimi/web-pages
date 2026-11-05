@@ -1,0 +1,5 @@
+{
+  "title": "Kibi 的网页托管站",
+  "description": "用 issue 提交、自动部署到 GitHub Pages 的小网页合集。不用为每个小页面单独开仓库。",
+  "base_path": "/web-pages"
+}

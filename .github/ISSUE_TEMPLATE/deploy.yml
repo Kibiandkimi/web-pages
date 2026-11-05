@@ -1,0 +1,99 @@
+name: 部署一个网页
+description: 贴 HTML / 传压缩包 / 给个网址 —— 提交后自动部署到 GitHub Pages
+title: "[页面] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 三种提交方式，任选其一
+
+        | 方式 | 适合 | 填在哪 |
+        | --- | --- | --- |
+        | **A. 内联 HTML** | 单个 `.html` 文件（可内嵌 CSS/JS） | 「HTML 代码」 |
+        | **B. 压缩包** | 多文件站点（含图片、css、js） | 「压缩包链接」 |
+        | **C. 远程网址** | 已经放在别处的页面 | 「远程网址」 |
+
+        > 💡 只想让标题自动变成链接？直接填「页面标题」+「HTML 代码」提交就行。
+
+        **注意**：GitHub Pages 上的内容是**公开**的，不要放密码、密钥或隐私数据。
+
+  - type: input
+    id: slug
+    attributes:
+      label: 页面标识（可选）
+      description: 决定最终链接里的路径。只能用小写字母、数字、`-`、`_`、`.`。留空则自动从标题生成。
+      placeholder: my-demo
+    validations:
+      required: false
+
+  - type: input
+    id: page_title
+    attributes:
+      label: 页面标题
+      description: 显示在首页画廊和浏览器标签上的名字。
+      placeholder: 我的第一个页面
+    validations:
+      required: true
+
+  - type: input
+    id: description
+    attributes:
+      label: 一句话说明（可选）
+      description: 显示在首页画廊的卡片上。
+      placeholder: 一个用来演示的静态页面
+    validations:
+      required: false
+
+  - type: input
+    id: tags
+    attributes:
+      label: 标签（可选）
+      description: 用逗号或空格分隔，最多 8 个。
+      placeholder: 工具, 演示
+    validations:
+      required: false
+
+  - type: textarea
+    id: html
+    attributes:
+      label: HTML 代码（方式 A）
+      description: |
+        直接贴完整 HTML。**建议用 ```` ```html ```` 围起来**，避免代码里的标题被误识别。
+      placeholder: |
+        ```html
+        <!doctype html>
+        <html lang="zh-CN">
+        <head><meta charset="utf-8"><title>Hello</title></head>
+        <body><h1>Hello, Pages!</h1></body>
+        </html>
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: zip
+    attributes:
+      label: 压缩包链接（方式 B）
+      description: |
+        把 `.zip` 直接拖进这个框，或粘贴一个可公开下载的 zip 链接。
+        压缩包根目录需要有 `index.html`（如果整个包外面套了一层文件夹也可以，会自动剥掉）。
+      placeholder: 拖拽 zip 到这里，或粘贴 https://example.com/site.zip
+    validations:
+      required: false
+
+  - type: input
+    id: remote
+    attributes:
+      label: 远程网址（方式 C）
+      description: 一个能直接下载到 HTML 的链接（不是网页预览链接）。如果它其实是 zip，也会自动按压缩包处理。
+      placeholder: https://raw.githubusercontent.com/user/repo/main/index.html
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我确认这些内容可以公开托管
+          required: true

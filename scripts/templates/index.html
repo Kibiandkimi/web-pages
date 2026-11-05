@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --bg-card: #ffffff;
+    --fg: #1a1c1f;
+    --fg-dim: #5c6672;
+    --line: #e3e6ea;
+    --accent: #2563eb;
+    --accent-soft: #dbeafe;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 4px 16px rgba(16, 24, 40, .05);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --fg: #e6edf3;
+      --fg-dim: #8b949e;
+      --line: #262c36;
+      --accent: #6ea8fe;
+      --accent-soft: #1c2b45;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .3);
+      color-scheme: dark;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC",
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 24px 80px; }
+
+  header.top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+  header.top h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.25; margin: 0; letter-spacing: -.02em; }
+  header.top p { margin: 0; color: var(--fg-dim); max-width: 60ch; }
+  .stats { display: flex; gap: 16px; flex-wrap: wrap; color: var(--fg-dim); font-size: .875rem; margin-top: 4px; }
+  .stats code { background: var(--bg-card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+
+  .search { position: relative; margin: 28px 0 24px; }
+  .search input {
+    width: 100%; padding: 12px 16px 12px 42px; font-size: 15px; color: var(--fg);
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;
+    outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+                width: 18px; height: 18px; stroke: var(--fg-dim); fill: none; stroke-width: 2; }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); }
+  .card {
+    display: flex; flex-direction: column; gap: 8px; padding: 18px 18px 16px;
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: var(--shadow); text-decoration: none; color: inherit;
+    transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 2px; }
+  .card h2 { margin: 0; font-size: 1.06rem; line-height: 1.4; letter-spacing: -.01em;
+             word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2;
+             -webkit-box-orient: vertical; overflow: hidden; }
+  .card p { margin: 0; font-size: .9rem; color: var(--fg-dim); display: -webkit-box;
+            -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+                gap: 8px; padding-top: 10px; font-size: .78rem; color: var(--fg-dim); }
+  .card .slug { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+                opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: .72rem; padding: 1px 8px; border-radius: 999px;
+         background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+
+  .empty { text-align: center; padding: 72px 20px; color: var(--fg-dim);
+           border: 1px dashed var(--line); border-radius: 16px; background: var(--bg-card); }
+  .empty strong { display: block; color: var(--fg); font-size: 1.05rem; margin-bottom: 6px; }
+
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
+           color: var(--fg-dim); font-size: .82rem; display: flex; flex-wrap: wrap;
+           gap: 8px 20px; justify-content: space-between; }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 36px 16px 56px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>{{TITLE}}</h1>
+    <p>{{DESCRIPTION}}</p>
+    <div class="stats">
+      <span>共 <strong>{{COUNT}}</strong> 个页面</span>
+      <span>构建于 <code>{{GENERATED_AT}}</code></span>
+      <span>新增页面：在仓库开一个 issue</span>
+    </div>
+  </header>
+
+  <div class="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="搜索标题、说明、标签或标识…" autocomplete="off" aria-label="搜索页面">
+  </div>
+
+  <main id="grid" class="grid">
+{{CARDS}}
+  </main>
+
+  <div id="empty" class="empty hidden">
+    <strong>没有匹配的页面</strong>
+    换个关键词试试。
+  </div>
+
+  <footer>
+    <span>{{TITLE}} · 由 GitHub Actions 自动构建</span>
+    <span><a href="manifest.json">manifest.json</a></span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById('q');
+  var grid = document.getElementById('grid');
+  var empty = document.getElementById('empty');
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.card'));
+  if (!cards.length) { empty.classList.remove('hidden'); return; }
+
+  function apply() {
+    var q = input.value.trim().toLowerCase();
+    var shown = 0;
+    cards.forEach(function (card) {
+      var hay = (card.dataset.search || '').toLowerCase();
+      var hit = !q || hay.indexOf(q) !== -1;
+      card.classList.toggle('hidden', !hit);
+      if (hit) shown++;
+    });
+    empty.classList.toggle('hidden', shown !== 0);
+  }
+
+  input.addEventListener('input', apply);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { input.value = ''; apply(); }
+    if (e.key === '/' && document.activeElement !== input) { e.preventDefault(); input.focus(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== input) { e.preventDefault(); input.focus(); }
+  });
+})();
+</script>
+</body>
+</html>
