@@ -144,11 +144,48 @@ my-demo
 
 ### 压缩包链接（方式 B）
 
-_无_
+_No response_
 
 ### 远程网址（方式 C）
 
-_无_
+_No response_
+
+### 确认
+
+- [X] 我确认这些内容可以公开托管
+"""
+
+# 可选字段全部留空时，GitHub issue form 渲染出来的是 `_No response_`
+FORM_MINIMAL = """### 页面标识（可选）
+
+_No response_
+
+### 页面标题
+
+只有标题和代码
+
+### 一句话说明（可选）
+
+_No response_
+
+### 标签（可选）
+
+_No response_
+
+### HTML 代码（方式 A）
+
+```html
+<!doctype html>
+<html><body><h1>minimal</h1></body></html>
+```
+
+### 压缩包链接（方式 B）
+
+_No response_
+
+### 远程网址（方式 C）
+
+_No response_
 
 ### 确认
 
@@ -207,6 +244,25 @@ class TestParsing(unittest.TestCase):
         p = sk.parse_issue(body, "z", 4)
         self.assertEqual(p["mode"], "zip")
         self.assertEqual(p["url"], "https://example.com/a/site.zip")
+
+    def test_no_response_placeholder_is_cleaned(self):
+        """GitHub issue form 空字段输出 `_No response_`，不能被当成真实内容。"""
+        p = sk.parse_issue(FORM_MINIMAL, "只有标题和代码", 9)
+        self.assertIsNone(p["slug"], "_No response_ 不应变成 slug")
+        self.assertEqual(p["description"], "")
+        self.assertEqual(p["tags"], [])
+        self.assertEqual(p["title"], "只有标题和代码")
+        self.assertEqual(p["mode"], "inline")
+        self.assertNotIn("_No response_", p["html"] or "")
+
+    def test_two_minimal_issues_do_not_collide(self):
+        """两个都留空 slug 的 issue，不能都算出 no-response 然后撞车。"""
+        a = sk.parse_issue(FORM_MINIMAL, "标题甲", 1)
+        b = sk.parse_issue(FORM_MINIMAL, "标题乙", 2)
+        slug_a = a["slug"] or sk.slug_from_title(a["title"], 1)
+        slug_b = b["slug"] or sk.slug_from_title(b["title"], 2)
+        self.assertNotEqual(slug_a, slug_b)
+        self.assertNotEqual(sk.normalize_slug(slug_a), "no-response")
 
     def test_zip_attachment_without_extension(self):
         body = "### 压缩包链接（方式 B）\n\n[site.zip](https://github.com/user-attachments/assets/abc-123)\n"
@@ -277,6 +333,73 @@ class TestZip(unittest.TestCase):
             out = Path(td) / "out"
             written = sk.safe_extract_zip(str(zpath), str(out))
             self.assertEqual(written, ["index.html"])
+
+    def test_skip_dotfiles_and_dotdirs(self):
+        """.env / .git/ / .github/ 之类必须丢弃，否则会被公开托管。"""
+        with tempfile.TemporaryDirectory() as td:
+            zpath = Path(td) / "s.zip"
+            self._zip(zpath, {
+                "index.html": b"x",
+                ".env": b"SECRET=1",
+                ".git/config": b"[core]",
+                ".github/workflows/evil.yml": b"on: push",
+                "assets/logo.png": b"\x89PNG",
+            })
+            out = Path(td) / "out"
+            skipped: list[str] = []
+            written = sk.safe_extract_zip(str(zpath), str(out), skipped=skipped)
+            self.assertEqual(sorted(written), ["assets/logo.png", "index.html"])
+            self.assertIn(".env", skipped)
+            self.assertFalse((out / ".env").exists())
+            self.assertFalse((out / ".git").exists())
+            self.assertFalse((out / ".github").exists())
+
+
+class TestUrlGuard(unittest.TestCase):
+    def test_rejects_private_hosts(self):
+        for url in ["http://127.0.0.1/x", "http://localhost/x",
+                    "http://169.254.169.254/latest/meta-data", "http://10.0.0.1/x"]:
+            with self.assertRaises(sk.SiteError, msg=url):
+                sk._assert_public_host(url)
+
+    def test_rejects_bad_scheme(self):
+        with self.assertRaises(sk.SiteError):
+            sk._assert_public_host("file:///etc/passwd")
+
+    def test_redirect_is_rechecked(self):
+        """302 跳到内网也必须被拦（否则 SSRF 防护形同虚设）。"""
+        calls: list[str] = []
+
+        def fake_guard(url):
+            calls.append(url)
+            if "169.254.169.254" in url:
+                raise sk.SiteError("内网地址")
+
+        original = sk._assert_public_host
+        sk._assert_public_host = fake_guard
+        try:
+            handler = sk._SafeRedirectHandler()
+            req = __import__("urllib.request", fromlist=["Request"]).Request(
+                "http://example.com/a"
+            )
+            with self.assertRaises(sk.SiteError):
+                handler.redirect_request(req, None, 302, "Found", {}, "http://169.254.169.254/x")
+            self.assertIn("http://169.254.169.254/x", calls)
+        finally:
+            sk._assert_public_host = original
+
+    def test_redirect_rejects_https_downgrade(self):
+        original = sk._assert_public_host
+        sk._assert_public_host = lambda url: None
+        try:
+            handler = sk._SafeRedirectHandler()
+            req = __import__("urllib.request", fromlist=["Request"]).Request(
+                "https://example.com/a"
+            )
+            with self.assertRaises(sk.SiteError):
+                handler.redirect_request(req, None, 302, "Found", {}, "http://example.com/a")
+        finally:
+            sk._assert_public_host = original
 
 
 class TestMaterialize(unittest.TestCase):
@@ -407,7 +530,7 @@ class TestEndToEnd(unittest.TestCase):
         self.assertTrue((self.root / "sites" / "my-demo" / "index.html").is_file())
         self.assertEqual(self.meta("my-demo")["status"], "active")
         comment = Path(out["comment_file"]).read_text(encoding="utf-8")
-        self.assertIn("部署完成", comment)
+        self.assertIn("{{STATUS}}", comment, "状态由 prepare_comment.py 回填")
         self.assertIn("kibiandkimi.github.io/web-pages/my-demo/", comment)
 
         # 2. 构建
@@ -540,6 +663,78 @@ class TestEndToEnd(unittest.TestCase):
         self.assertIn("共 <strong>0</strong> 个页面", gallery)
         self.assertTrue((self.root / "_site" / "404.html").is_file())
         self.assertTrue((self.root / "_site" / ".nojekyll").is_file())
+
+    def test_redeploy_without_change_is_noop(self):
+        run_script(self.root, "handle_event.py",
+                   event=issue_event("opened", 1, "t", FORM_BODY), event_name="issues")
+        res = run_script(self.root, "handle_event.py",
+                         event=issue_event("edited", 1, "t", FORM_BODY), event_name="issues")
+        self.assertEqual(res["outputs"]["changed"], "false", "内容没变就不该产生空提交")
+        self.assertEqual(res["outputs"]["should_deploy"], "false")
+        self.assertIn("没有需要重新部署", Path(res["outputs"]["comment_file"]).read_text(encoding="utf-8"))
+
+    def test_rename_into_existing_dir_is_rejected(self):
+        run_script(self.root, "handle_event.py",
+                   event=issue_event("opened", 1, "t", FORM_BODY), event_name="issues")
+        other = self.root / "sites" / "manual-site"
+        other.mkdir(parents=True)
+        (other / "index.html").write_text("x", encoding="utf-8")
+        res = run_script(self.root, "handle_event.py",
+                         event=comment_event(1, "/rename manual-site", FORM_BODY),
+                         event_name="issue_comment")
+        self.assertEqual(res["outputs"]["status"], "failed")
+        self.assertIn("已被占用", Path(res["outputs"]["comment_file"]).read_text(encoding="utf-8"))
+        self.assertTrue((self.root / "sites" / "my-demo").exists())
+
+    def test_commit_message_has_skip_ci(self):
+        res = run_script(self.root, "handle_event.py",
+                         event=issue_event("opened", 7, "t", FORM_BODY), event_name="issues")
+        msg = res["outputs"]["commit_msg"]
+        self.assertIn("my-demo", msg)
+        self.assertIn("#7", msg)
+        self.assertIn("[skip ci]", msg)
+
+
+class TestPrepareComment(unittest.TestCase):
+    def _run(self, text: str, **env) -> str:
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "comment.md"
+            path.write_text(text, encoding="utf-8")
+            full_env = os.environ.copy()
+            for key in ("COMMIT_RESULT", "BUILD_RESULT", "UPLOAD_RESULT", "DEPLOY_RESULT", "SITE_URL"):
+                full_env.pop(key, None)
+            full_env.update({"COMMENT_FILE": str(path)})
+            full_env.update(env)
+            proc = subprocess.run(
+                [sys.executable, str(REPO / "scripts" / "prepare_comment.py")],
+                capture_output=True, text=True, env=full_env,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            return path.read_text(encoding="utf-8")
+
+    def test_success(self):
+        out = self._run("{{STATUS}}\n\ntable", SITE_URL="https://x.io/p/a/",
+                        COMMIT_RESULT="success", BUILD_RESULT="success",
+                        UPLOAD_RESULT="success", DEPLOY_RESULT="success")
+        self.assertIn("✅ **部署完成**", out)
+        self.assertIn("https://x.io/p/a/", out)
+        self.assertNotIn("{{STATUS}}", out)
+
+    def test_deploy_failure_is_not_reported_as_success(self):
+        out = self._run("{{STATUS}}\n\ntable", SITE_URL="https://x.io/p/a/",
+                        COMMIT_RESULT="success", BUILD_RESULT="success",
+                        UPLOAD_RESULT="success", DEPLOY_RESULT="failure")
+        self.assertNotIn("✅", out)
+        self.assertIn("部署失败", out)
+
+    def test_commit_failure_takes_priority(self):
+        out = self._run("{{STATUS}}", COMMIT_RESULT="failure", DEPLOY_RESULT="skipped")
+        self.assertIn("写入仓库失败", out)
+
+    def test_non_deploy_comment_untouched(self):
+        out = self._run("ℹ️ 没有变化", SITE_URL="https://x.io/")
+        self.assertEqual(out, "ℹ️ 没有变化")
+
 
 
 if __name__ == "__main__":

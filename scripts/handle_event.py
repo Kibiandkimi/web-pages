@@ -43,9 +43,14 @@ LABEL_ACTIONS = {
 # --------------------------------------------------------------------------- #
 
 
+def _flat(value) -> str:
+    """GITHUB_OUTPUT 是 ``key=value`` 单行格式，值里不能带换行。"""
+    return str(value).replace("\r", " ").replace("\n", " ").strip()
+
+
 def emit_outputs(values: dict) -> None:
     path = os.environ.get("GITHUB_OUTPUT")
-    lines = [f"{k}={v}" for k, v in values.items()]
+    lines = [f"{k}={_flat(v)}" for k, v in values.items()]
     if path:
         with open(path, "a", encoding="utf-8") as fh:
             fh.write("\n".join(lines) + "\n")
@@ -91,6 +96,11 @@ FOOTER = (
     "<sub>可用命令：`/redeploy` 重新部署 · `/delete` 删除 · `/offline` 下线 · "
     "`/online` 恢复 · `/rename <新标识>` 改链接</sub>"
 )
+
+
+def cell(value) -> str:
+    """markdown 表格单元格转义。"""
+    return str(value if value is not None else "").replace("|", "\\|").replace("\n", " ").strip()
 
 
 # --------------------------------------------------------------------------- #
@@ -163,26 +173,46 @@ def do_deploy(issue: dict, plan: Plan) -> None:
         )
 
     site_dir = os.path.join(sk.SITES_DIR, slug)
+    before_digest = sk.dir_digest(site_dir)
     files = sk.materialize(site_dir, parsed)
+    after_digest = sk.dir_digest(site_dir)
     total_bytes = sum(
-        os.path.getsize(os.path.join(site_dir, f)) for f in files if os.path.isfile(os.path.join(site_dir, f))
+        os.path.getsize(os.path.join(site_dir, f))
+        for f in files
+        if os.path.isfile(os.path.join(site_dir, f))
     )
 
     now = sk.now_iso()
+    changed_fields = {
+        "title": parsed["title"],
+        "description": parsed["description"],
+        "tags": parsed["tags"],
+        "issue": number,
+        "source": {"type": parsed["mode"], "url": parsed.get("url") or None},
+        "file_count": len(files),
+        "size_bytes": total_bytes,
+    }
+
+    # 内容与元数据都没变就别产生空提交、也别白跑一次部署
+    if (
+        existing is not None
+        and before_digest == after_digest
+        and all(existing.get(k) == v for k, v in changed_fields.items())
+    ):
+        plan.slug = slug
+        plan.action = "noop"
+        plan.message = f"`{slug}` 内容没有变化"
+        plan.comment = (
+            f"ℹ️ `{slug}` 的内容和线上完全一致，没有需要重新部署的改动。\n\n"
+            f"链接：<{sk.site_url(slug)}>\n\n"
+            "如果确实想强制重跑一次部署，可以修改 issue 正文任意一个字符后再保存。\n\n" + FOOTER
+        )
+        return
+
     meta = dict(existing or {})
-    meta.update(
-        {
-            "slug": slug,
-            "title": parsed["title"],
-            "description": parsed["description"],
-            "tags": parsed["tags"],
-            "issue": number,
-            "source": {"type": parsed["mode"], "url": parsed.get("url") or None},
-            "updated_at": now,
-            "file_count": len(files),
-            "size_bytes": total_bytes,
-        }
-    )
+    meta.update(changed_fields)
+    meta["slug"] = slug
+    meta["updated_at"] = now
     meta.setdefault("status", "active")
     meta.setdefault("created_at", now)
     sk.save_meta(meta)
@@ -200,23 +230,30 @@ def render_deploy_comment(meta: dict, files: list[str], parsed: dict) -> str:
     mode_label = {"inline": "内联 HTML", "zip": "压缩包", "url": "远程网址"}.get(
         meta.get("source", {}).get("type"), "未知"
     )
-    status = meta.get("status", "active")
-    badge = "✅ **部署完成**" if status == "active" else "⚠️ **部署完成（当前处于下线状态）**"
+    status_label = "已上线" if meta.get("status", "active") == "active" else "已下线"
 
-    lines = [f"{badge} → [打开页面]({url})", ""]
+    # {{STATUS}} 由 prepare_comment.py 按各步骤的真实结果填，
+    # 避免「部署失败还报部署完成」
+    lines = ["{{STATUS}}", ""]
     lines.append("| 项 | 值 |")
     lines.append("| --- | --- |")
     lines.append(f"| 链接 | <{url}> |")
-    lines.append(f"| 标识 | `{meta['slug']}` |")
-    lines.append(f"| 标题 | {meta['title']} |")
+    lines.append(f"| 标识 | `{cell(meta['slug'])}` |")
+    lines.append(f"| 标题 | {cell(meta['title'])} |")
     if meta.get("description"):
-        lines.append(f"| 说明 | {meta['description']} |")
+        lines.append(f"| 说明 | {cell(meta['description'])} |")
     if meta.get("tags"):
-        lines.append("| 标签 | " + " ".join(f"`{t}`" for t in meta["tags"]) + " |")
+        lines.append("| 标签 | " + " ".join(f"`{cell(t)}`" for t in meta["tags"]) + " |")
     lines.append(f"| 来源 | {mode_label} |")
+    lines.append(f"| 状态 | {status_label} |")
     lines.append(f"| 文件数 | {len(files)} |")
     lines.append(f"| 更新时间 | `{meta['updated_at']}` |")
     lines.append("")
+
+    warnings = [w for w in (parsed.get("warnings") or []) if w]
+    if warnings:
+        lines.append("> ⚠️ " + "\n>\n> ".join(warnings))
+        lines.append("")
 
     shown = files[:40]
     lines.append(f"<details><summary>文件列表（{len(files)} 个）</summary>\n")
@@ -297,11 +334,11 @@ def do_rename(issue: dict, plan: Plan, new_slug: str, old_slug: str | None) -> N
         plan.action = "rename"
         plan.comment = f"ℹ️ 标识已经是 `{old_slug}`，无需改名。\n\n{FOOTER}"
         return
-    if sk.load_meta(target):
-        raise sk.SiteError(f"标识 `{target}` 已被占用，换一个吧。")
-
     old_dir = os.path.join(sk.SITES_DIR, old_slug)
     new_dir = os.path.join(sk.SITES_DIR, target)
+    # 目标可能只占了目录没写 meta（手动放进来的站点），也要拦住
+    if sk.load_meta(target) or os.path.exists(new_dir):
+        raise sk.SiteError(f"标识 `{target}` 已被占用，换一个吧。")
     if os.path.isdir(old_dir):
         os.replace(old_dir, new_dir)
     meta = sk.load_meta(old_slug) or {"slug": old_slug, "issue": issue.get("number")}
@@ -467,6 +504,7 @@ def run() -> int:
         with open(comment_file, "w", encoding="utf-8") as fh:
             fh.write(plan.comment + "\n")
 
+    issue_number = (event.get("issue") or {}).get("number")
     emit_outputs(
         {
             "changed": "true" if plan.changed else "false",
@@ -475,12 +513,27 @@ def run() -> int:
             "status": plan.status,
             "action": plan.action,
             "slug": plan.slug or "",
+            "site_url": sk.site_url(plan.slug) if plan.slug else "",
+            "commit_msg": commit_message(plan, issue_number),
         }
     )
     emit_summary(
         f"### {plan.action} · {plan.status}\n\n{plan.message or '（无变化）'}\n"
     )
     return 0
+
+
+def commit_message(plan: Plan, issue_number) -> str:
+    if plan.action == "rebuild":
+        return "chore: rebuild pages"
+    if plan.slug:
+        base = f"sites: {plan.action} {plan.slug}"
+    else:
+        base = "sites: update"
+    if issue_number:
+        base += f" (issue #{issue_number})"
+    # 机器人提交没必要再触发一次 push 事件（尤其是用 PAT 的时候）
+    return base + " [skip ci]"
 
 
 if __name__ == "__main__":

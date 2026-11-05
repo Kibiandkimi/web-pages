@@ -20,7 +20,7 @@ import sitekit as sk  # noqa: E402
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 OUT_DIR = os.path.join(sk.ROOT, "_site")
-IGNORE_NAMES = {".git", ".github", "__pycache__", ".DS_Store"}
+IGNORE_NAMES = {".git", ".github", "__pycache__", ".DS_Store", ".*"}
 
 
 def read_template(name: str) -> str:
@@ -29,9 +29,16 @@ def read_template(name: str) -> str:
 
 
 def fill(template: str, mapping: dict) -> str:
-    for key, value in mapping.items():
-        template = template.replace("{{" + key + "}}", str(value))
-    return template
+    """单次替换占位符。
+
+    不能用循环 str.replace：如果某个值里恰好含有 ``{{CARDS}}`` 之类的字样，
+    二次替换会把它当模板再展开一次。
+    """
+
+    def repl(match: re.Match) -> str:
+        return str(mapping.get(match.group(1), match.group(0)))
+
+    return re.sub(r"\{\{([A-Z0-9_]+)\}\}", repl, template)
 
 
 def human_date(value: str | None) -> str:
@@ -166,6 +173,7 @@ def build() -> int:
     not_found = fill(read_template("404.html"), {"BASE": base})
     sk.atomic_write(os.path.join(OUT_DIR, "404.html"), not_found)
 
+    origin = sk.pages_base_url().rstrip("/")
     manifest = {
         "generated_at": generated_at,
         "count": len(published),
@@ -176,7 +184,7 @@ def build() -> int:
                 "description": s.get("description") or "",
                 "tags": s.get("tags") or [],
                 "updated_at": s.get("updated_at"),
-                "url": f"{base}/{s['slug']}/",
+                "url": f"{origin}/{s['slug']}/" if origin else f"{base}/{s['slug']}/",
             }
             for s in published
         ],
@@ -186,7 +194,7 @@ def build() -> int:
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
     )
 
-    # 万一以后切成「分支部署」，也避免 Jekyll 吃掉下划线开头的文件
+    # 只是给「万一以后切成分支部署」留的保险，artifact 部署不会上传隐藏文件
     sk.atomic_write(os.path.join(OUT_DIR, ".nojekyll"), "")
 
     print(f"构建完成：{len(published)} 个站点 → {OUT_DIR}")

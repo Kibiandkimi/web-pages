@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+import hashlib
 import html as _htmlmod
 import ipaddress
 import json
@@ -234,6 +235,12 @@ HTML_HINT_RE = re.compile(
 )
 URL_RE = re.compile(r"https?://[^\s<>\"'()\[\]{}]+", re.I)
 
+# issue form 空字段的占位符。GitHub 实际输出的是 ``_No response_``（带下划线），
+# 不清掉的话会被当成 slug / 标题 / 标签的真实内容。
+_PLACEHOLDER_RE = re.compile(
+    r"^[ \t]*(?:_No response_|No response|_无_|无内容|无)[ \t]*$", re.M
+)
+
 
 def looks_like_html(text: str) -> bool:
     return bool(text and HTML_HINT_RE.search(text))
@@ -251,8 +258,7 @@ def find_urls(text: str) -> list[str]:
 def _clean_text(value: str) -> str:
     """去掉占位符残留、首尾空白和多余空行。"""
     v = (value or "").replace("\r\n", "\n").replace("\r", "\n")
-    v = re.sub(r"^[ \t]*_无_[ \t]*$", "", v, flags=re.M)
-    v = re.sub(r"^[ \t]*No response[ \t]*$", "", v, flags=re.M)
+    v = _PLACEHOLDER_RE.sub("", v)
     return v.strip()
 
 
@@ -351,14 +357,19 @@ def parse_issue(body: str, title: str = "", number: int | None = None) -> dict:
 
 
 class _SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
-    """跨域重定向时丢掉 Authorization 头，避免 token 泄漏给第三方。"""
+    """每次跳转都重新校验目标地址，并禁止 https → http 降级。"""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D102
+        old = urllib.parse.urlsplit(req.full_url)
+        new_parts = urllib.parse.urlsplit(newurl)
+        if old.scheme == "https" and new_parts.scheme != "https":
+            raise SiteError(f"拒绝 https → {new_parts.scheme} 的重定向：`{newurl}`")
+        # 关键：重定向目标也要过一遍内网校验，否则 302 就能绕过 SSRF 防护
+        _assert_public_host(newurl)
+
         new = super().redirect_request(req, fp, code, msg, headers, newurl)
         if new is not None:
-            old = urllib.parse.urlsplit(req.full_url)
-            nw = urllib.parse.urlsplit(newurl)
-            if (old.scheme, old.netloc) != (nw.scheme, nw.netloc):
+            if (old.scheme, old.netloc) != (new_parts.scheme, new_parts.netloc):
                 for key in list(new.headers):
                     if key.lower() == "authorization":
                         del new.headers[key]
@@ -371,22 +382,33 @@ class _SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
 def _assert_public_host(url: str) -> None:
     if os.environ.get("SITEKIT_ALLOW_PRIVATE") == "1":
         return
-    host = (urllib.parse.urlsplit(url).hostname or "").lower()
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme not in ("http", "https"):
+        raise SiteError(f"只支持 http/https 链接，收到：`{url}`")
+    host = (parts.hostname or "").lower()
     if not host:
         raise SiteError(f"网址不合法：`{url}`")
-    if host in ("localhost", "localhost.localdomain"):
+    if host in ("localhost", "localhost.localdomain") or host.endswith(".localhost"):
         raise SiteError(f"不允许下载本机地址：`{url}`")
     try:
         infos = socket.getaddrinfo(host, None)
-    except OSError:
-        return  # 解析不了就交给下载阶段报错
+    except OSError as exc:
+        # 解析不了就别放行：宁可报错，也不要绕过内网校验
+        raise SiteError(f"无法解析域名 `{host}`：{exc}") from exc
     for info in infos:
         try:
-            ip = ipaddress.ip_address(info[4][0])
+            ip = ipaddress.ip_address(str(info[4][0]).split("%", 1)[0])
         except ValueError:
-            continue
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
-            raise SiteError(f"不允许下载内网地址：`{url}`")
+            raise SiteError(f"无法识别 `{host}` 解析出的地址，已拒绝：`{url}`")
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            raise SiteError(f"不允许下载内网地址（{ip}）：`{url}`")
 
 
 def fetch_url(url: str, dest_path: str, max_bytes: int = MAX_DOWNLOAD_BYTES) -> str:
@@ -453,8 +475,12 @@ def _is_symlink(info: zipfile.ZipInfo) -> bool:
     return ((info.external_attr >> 16) & 0o170000) == 0o120000
 
 
-def safe_extract_zip(zip_path: str, dest_dir: str) -> list[str]:
-    """安全解包，自动去掉统一的顶层目录。返回写入的相对路径列表。"""
+def safe_extract_zip(zip_path: str, dest_dir: str, skipped: list[str] | None = None) -> list[str]:
+    """安全解包，自动去掉统一的顶层目录。返回写入的相对路径列表。
+
+    以 ``.`` 开头的文件 / 目录一律跳过（``.env``、``.git/``、``.github/`` 之类），
+    被跳过的名字会追加到 ``skipped`` 里，方便回评提示用户。
+    """
     written: list[str] = []
     total = 0
     os.makedirs(dest_dir, exist_ok=True)
@@ -469,6 +495,10 @@ def safe_extract_zip(zip_path: str, dest_dir: str) -> list[str]:
             if rel is None:
                 continue
             if rel.startswith(_JUNK_PREFIXES) or os.path.basename(rel) in _JUNK_NAMES:
+                continue
+            if any(part.startswith(".") for part in rel.split("/")):
+                if skipped is not None and rel not in skipped:
+                    skipped.append(rel)
                 continue
             infos.append((info, rel))
 
@@ -559,7 +589,15 @@ def materialize(site_dir: str, parsed: dict) -> list[str]:
             if _zip_looks_valid(download) or url.split("?")[0].lower().endswith(".zip"):
                 extract_dir = os.path.join(tmp_dir, ".extracted")
                 os.makedirs(extract_dir, exist_ok=True)
-                safe_extract_zip(download, extract_dir)
+                skipped: list[str] = []
+                safe_extract_zip(download, extract_dir, skipped=skipped)
+                if skipped:
+                    preview = "、".join(f"`{s}`" for s in skipped[:5])
+                    more = f" 等 {len(skipped)} 个" if len(skipped) > 5 else ""
+                    parsed.setdefault("warnings", []).append(
+                        f"已忽略压缩包里以点开头的文件：{preview}{more}"
+                        "（GitHub Pages 上这些文件本来也会被公开，出于安全默认丢弃）"
+                    )
                 os.remove(download)
                 for name in os.listdir(extract_dir):
                     shutil.move(os.path.join(extract_dir, name), os.path.join(tmp_dir, name))
@@ -612,6 +650,21 @@ def collect_files(root: str) -> list[str]:
             rel = os.path.relpath(os.path.join(dirpath, name), root)
             out.append(rel.replace(os.sep, "/"))
     return out
+
+
+def dir_digest(path: str) -> str:
+    """目录内容摘要，用来判断一次「重新部署」是不是真的有变化。"""
+    if not os.path.isdir(path):
+        return ""
+    digest = hashlib.sha256()
+    for rel in collect_files(path):
+        digest.update(rel.encode("utf-8"))
+        digest.update(b"\0")
+        with open(os.path.join(path, rel), "rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 20), b""):
+                digest.update(chunk)
+        digest.update(b"\0")
+    return digest.hexdigest()
 
 
 # --------------------------------------------------------------------------- #
