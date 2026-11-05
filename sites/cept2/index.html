@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walk, Ride, or Wait? — Getting to class on SZU Yuehai Campus</title>
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-walk" viewBox="0 0 48 48"><circle class="p" pathLength="1" cx="27" cy="7.5" r="4"/><path class="p" pathLength="1" d="M25.5 13.5 22 27.5"/><path class="p" pathLength="1" d="M22 27.5l6.5 7.5 1.5 9"/><path class="p" pathLength="1" d="M22 27.5l-5 7.5-5 7"/><path class="p" pathLength="1" d="M24.5 16.5l6 5 5-2"/><path class="p" pathLength="1" d="M24.5 16.5l-6.5 5.5-3 6"/></symbol>
+    <symbol id="i-bike" viewBox="0 0 48 48"><circle class="p" pathLength="1" cx="11" cy="31" r="8"/><circle class="p" pathLength="1" cx="37" cy="31" r="8"/><path class="p" pathLength="1" d="M11 31h12l-4-14z"/><path class="p" pathLength="1" d="M19 17h13l-9 14"/><path class="p" pathLength="1" d="M32 17l5 14"/><path class="p" pathLength="1" d="M15.5 15.5h7"/><path class="p" pathLength="1" d="M29 12.5h5.5M32 12.5V17"/></symbol>
+    <symbol id="i-bus" viewBox="0 0 48 48"><rect class="p" pathLength="1" x="7" y="7" width="34" height="29" rx="6"/><rect class="p" pathLength="1" x="11" y="11.5" width="26" height="10" rx="2"/><path class="p" pathLength="1" d="M7 27h34"/><circle class="p" pathLength="1" cx="14.5" cy="31.5" r="1.4"/><circle class="p" pathLength="1" cx="33.5" cy="31.5" r="1.4"/><path class="p" pathLength="1" d="M13 36v4.5M35 36v4.5"/></symbol>
+  </defs>
+</svg>
+
+<div id="viewport">
+<div id="stage">
+  <canvas id="map"></canvas>
+  <div id="veil"></div>
+  <div id="paper"></div>
+
+  <div class="chrome" id="brand"><span class="dots"><i class="k-walk"></i><i class="k-bike"></i><i class="k-bus"></i></span><b>Walk · Ride · Wait</b><span>SZU Yuehai</span></div>
+  <div class="chrome" id="section"><span id="sec-name"></span><b id="sec-count"></b></div>
+  <div class="chrome" id="hint">→ next · N notes · D data · T theme · ? help</div>
+  <button class="navbtn" id="prev" aria-label="Previous slide">‹</button>
+  <button class="navbtn" id="next" aria-label="Next slide">›</button>
+  <div id="metro"></div>
+  <div id="sweep"><div class="k" id="sweep-k"></div><div class="t" id="sweep-t"></div><div class="bar"><i class="k-walk"></i><i class="k-bike"></i><i class="k-bus"></i></div></div>
+  <div id="tip"></div>
+
+  <!-- ============================================================ 1 · Title -->
+  <section class="slide" data-map="title" data-veil="left" data-sec="Introduction" data-title="Walk, Ride, or Wait?">
+    <div class="col" style="left:96px; top:190px; width:820px;">
+      <div class="eyebrow rv">Shenzhen University · Yuehai Campus</div>
+      <h1 class="title-words split"><span class="tw" style="--c:var(--walk); --ud:520">Walk,</span> <span class="tw" style="--c:var(--bike); --ud:640">Ride,</span><br>or <span class="tw ghost" style="--ud:900">Wait<span class="qmark">?</span></span></h1>
+      <p class="lead rv" style="--d:650; max-width:600px;">Three ways to get to class on a hilly campus. What <b><span data-k="nTracks">25</span> GPS tracks</b> say about each one, and which one you should pick.</p>
+      <div class="mode-row rv" style="--d:850;">
+        <div class="chip"><svg class="ico ico-walk drawme" style="--d:850"><use href="#i-walk"/></svg><div><b>Walk</b><span><span data-k="nFoot">12</span> tracks on foot</span></div></div>
+        <div class="chip"><svg class="ico ico-bike drawme" style="--d:950"><use href="#i-bike"/></svg><div><b>Ride</b><span><span data-k="nBike">13</span> tracks by bike</span></div></div>
+        <div class="chip"><svg class="ico ico-bus drawme" style="--d:1050"><use href="#i-bus"/></svg><div><b>Wait</b><span class="pending" style="margin-top:4px;">shuttle · data pending</span></div></div>
+      </div>
+      <div class="rv small" style="--d:1100; margin-top:70px; letter-spacing:.08em; text-transform:uppercase; font-size:13px;">English Presentation · November 2026</div>
+    </div>
+    <div class="notes">Good morning everyone. Every day on this campus we make the same small decision: do I walk, do I ride a bike, or do I wait for the shuttle bus? I recorded my own GPS tracks to find out how these options really compare. The moving lines behind me are simulated walkers in blue and cyclists in orange, each moving at the speed my model predicts for that road.</div>
+  </section>
+
+  <!-- ============================================================ 2 · The choice -->
+  <section class="slide" data-map="ambient" data-veil="soft" data-sec="Introduction" data-title="The choice">
+    <div class="eyebrow rv">01 · The choice</div>
+    <h2 class="split">A hilly campus, a short break, and <em>three ways</em> to class</h2>
+    <div class="cards3" style="margin-top:44px;">
+      <div class="mcard rv" style="--d:300"><i class="bar-mode k-walk"></i><span class="tag">Mode 1</span>
+        <svg class="ico ico-walk drawme" style="--d:300"><use href="#i-walk"/></svg>
+        <h3>Walk</h3><p>Free, flexible, and goes everywhere, stairs included. But it is the slowest.</p>
+        <div class="stat"><b><span data-k="nFoot">12</span></b><span>tracks on foot · <span data-k="kmFoot">29.8</span> km</span></div></div>
+      <div class="mcard rv" style="--d:420"><i class="bar-mode k-bike"></i><span class="tag">Mode 2</span>
+        <svg class="ico ico-bike drawme" style="--d:420"><use href="#i-bike"/></svg>
+        <h3>Ride</h3><p>Fast on roads. Hills, steps and crowds at class change get in the way.</p>
+        <div class="stat"><b><span data-k="nBike">13</span></b><span>tracks by bike · <span data-k="kmBike">18.4</span> km</span></div></div>
+      <div class="mcard ghost-card rv" style="--d:540"><span class="tag">Mode 3</span>
+        <svg class="ico ico-bus drawme" style="--d:540"><use href="#i-bus"/></svg>
+        <h3>Wait</h3><p>The campus shuttle: no effort and no sweat, if it comes on time.</p>
+        <div class="stat"><b style="color:var(--bus)">0</b><span class="pending">trips logged · data pending</span></div>
+        <div class="shimmer" style="position:absolute; inset:0; border-radius:26px; pointer-events:none;"></div></div>
+    </div>
+    <div class="rv" style="--d:800; margin-top:36px; display:grid; grid-template-columns: 120px 1fr; gap:22px; align-items:start; max-width:1180px;">
+      <div style="font-size:44px; font-weight:700; letter-spacing:-.04em; line-height:1;">2012</div>
+      <p class="small" style="font-size:17px; color:var(--ink-2);">Why these three? The campus is hilly, and electric motorbikes were once everywhere. In 2012 SZU banned them on campus and brought in <b>shuttle buses and shared bikes</b> instead.<sup>1</sup> So which one should you pick?<br><span style="font-size:13px; color:var(--muted);">1 · Wikipedia (zh), “深圳大学”, section Transport.</span></p>
+    </div>
+    <div class="notes">There are three options. Walking is free and goes everywhere, but it's slow. Riding is fast, but hills, steps and crowds get in the way. And the shuttle bus needs no effort, but you have to wait for it. These three exist for a reason: our campus is hilly, and when the university banned electric motorbikes in 2012, it introduced shuttles and shared bikes instead. I have 12 tracks on foot and 13 by bike. For the shuttle I have no data yet, so you'll see it as a dashed "ghost" throughout the talk.</div>
+  </section>
+
+  <!-- ============================================================ 3 · Evidence -->
+  <section class="slide" data-map="cover" data-veil="left" data-sec="Introduction" data-title="The evidence">
+    <div class="col" style="left:96px; top:104px; width:640px;">
+      <div class="eyebrow rv">02 · The evidence</div>
+      <h2 class="split" style="max-width:640px;">Every road on campus, <em>in both directions</em></h2>
+      <div class="tiles" style="grid-template-columns:repeat(2, 1fr); margin-top:34px; width:600px;">
+        <div class="tile rv" style="--d:250"><div class="lbl">GPS tracks</div><div class="val" data-count="nTracks">25</div><div class="sub"><span data-k="nWalk">7</span> walks · <span data-k="nRun">5</span> runs · <span data-k="nBike">13</span> rides</div></div>
+        <div class="tile rv" style="--d:340"><div class="lbl">Distance recorded</div><div class="val"><span data-count="kmTotal" data-dec="1">48.2</span><small>km</small></div><div class="sub"><span data-k="points">26,149</span> GPS points</div></div>
+        <div class="tile rv" style="--d:430"><div class="lbl">Points matched to roads</div><div class="val"><span data-k="matchMin">88</span>–100<small>%</small></div><div class="sub">hidden-Markov map matching</div></div>
+        <div class="tile rv" style="--d:520"><div class="lbl">Real commutes</div><div class="val" data-count="commutes">18</div><div class="sub">dorm, class, canteen</div></div>
+      </div>
+      <div class="steps4" style="margin-top:40px; width:600px; grid-template-columns:repeat(4,1fr);">
+        <div class="step" data-n="1" style="--d:650"><h4>Record</h4><p>Phone GPS, uploaded to a shared server</p></div>
+        <div class="step" data-n="2" style="--d:740"><h4>Match</h4><p>Each point to a road and a direction</p></div>
+        <div class="step" data-n="3" style="--d:830"><h4>Model</h4><p>Speed per road: slope, type, rush hour</p></div>
+        <div class="step" data-n="4" style="--d:920"><h4>Test</h4><p>Predict tracks the model never saw</p></div>
+      </div>
+      <div class="rv legend" style="--d:1000; margin-top:26px;"><span><i class="key k-walk"></i>roads I walked</span><span><i class="key k-bike"></i>roads I cycled</span><span class="small" style="font-size:14px;">Only aggregates are shown: no raw tracks, no timestamps.</span></div>
+    </div>
+    <div class="notes">Here is the evidence: 25 tracks, about 48 kilometres in total. Each GPS point is matched to a road and a direction. Then a statistical model learns how fast each road is, separating my personal pace from slope, road type and rush hour. Blue roads on the map are the ones I walked, orange the ones I cycled. The model fills in the rest, and I test it on tracks it has never seen.</div>
+  </section>
+
+  <!-- ============================================================ 4 · Hill -->
+  <section class="slide" data-map="hill" data-veil="right" data-sec="Introduction" data-title="The terrain">
+    <div class="col" style="left:1010px; top:104px; width:494px;">
+      <div class="eyebrow rv">03 · The terrain</div>
+      <h2 class="split">The campus is <em>a hill</em></h2>
+      <p class="lead rv" style="--d:300; font-size:21px;">Huiwen sits at <b><span data-k="hHuiwen">33</span> m</b>. The southern teaching buildings sit at <b><span data-k="hSouth">5–8</span> m</b>. Every trip between them climbs or drops about <b>25 m</b>.</p>
+      <div class="rv" style="--d:450; margin-top:30px;" id="ch-elev"></div>
+      <p class="rv small" style="--d:650; margin-top:14px; font-size:14px;">Terrain from the DirMap shared height model (10 m grid), drawn in 2 m layers with height exaggerated.</p>
+    </div>
+    <div class="notes">Before comparing the modes, one thing about our campus: it's a hill. Huiwen in the north is at about 33 metres. The southern teaching buildings, Zhili, Zhizhen and Zhixin, are at only 5 to 8 metres. So any trip between north and south climbs or drops about 25 metres. Keep this in mind, because it affects walking and cycling very differently.</div>
+  </section>
+
+  <!-- ============================================================ 5 · Speed -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="Head to head" data-title="Speed">
+    <div class="eyebrow rv">04 · Speed</div>
+    <h2 class="split">A bike is about <em>3× faster</em>, door to door</h2>
+    <div class="col" style="left:96px; top:258px;"><div class="rv legend" style="--d:200; margin-bottom:8px;"><span><i class="dot k-walk"></i>Walk</span><span><i class="dot k-bike"></i>Ride</span><span class="small" style="font-size:14px;"><span data-k="nPairs">380</span> trips between 20 campus places · off-peak · model</span></div><div class="rv" style="--d:250" id="ch-speed"></div></div>
+    <div class="col" style="left:1110px; top:262px; width:394px;">
+      <div class="rv" style="--d:500"><div class="small" style="margin-bottom:6px;">Median speed-up by bike</div><div class="hero-num"><span data-count="speedup" data-dec="1">2.8</span><small>×</small></div></div>
+      <div class="callout c-bike rv" style="--d:700; margin-top:30px;"><h4>About <span data-k="per100">1.0</span> min saved per 100 m</h4><p>Walking runs at <b><span data-k="walkKmh">4.2</span> km/h</b>. Riding averages <b><span data-k="bikeKmh">12</span> km/h</b> door to door, with turns, paths and junctions.</p></div>
+      <div class="callout rv" style="--d:850; margin-top:22px;"><h4>The hidden cost</h4><p>Unlocking and parking are not in the data. If they take 2 minutes, the bike only pays off beyond about <b><span data-k="breakEven">250</span> m</b>.</p></div>
+    </div>
+    <div class="notes">First, speed. Each dot is one trip between two of twenty campus places: blue on foot, orange by bike. On average the bike is about 2.8 times faster. Walking is about 4.2 kilometres per hour; riding averages about 12 door to door, because of turns and paths. A useful rule: the bike saves about one minute for every 100 metres. But unlocking and parking a bike are not in my data. If they cost two minutes, the bike only pays off for trips longer than about 250 metres.</div>
+  </section>
+
+  <!-- ============================================================ 6 · Race -->
+  <section class="slide" data-map="race" data-veil="right" data-sec="Head to head" data-title="A race to class">
+    <div class="col" style="left:960px; top:104px; width:544px;">
+      <div class="eyebrow rv">05 · A race to class</div>
+      <h2 class="split" style="font-size:46px;">South Dorms → Huiwen</h2>
+      <p class="lead rv" style="--d:250; font-size:19px; margin-top:12px;">Same start, same moment, the model's fastest route for each. Replayed <span data-k="raceSpeed">80</span>× faster.</p>
+      <div class="rv" style="--d:400; margin-top:12px;">
+        <div class="racer" id="r-bike"><svg class="ico ico-bike"><use href="#i-bike"/></svg><div class="nm">Ride<small>climbs <span data-k="raceUpB">31</span> m on roads</small></div><div><div class="tm"><span>0.0</span><small>min</small></div><div class="flag"></div></div></div>
+        <div class="racer" id="r-walk"><svg class="ico ico-walk"><use href="#i-walk"/></svg><div class="nm">Walk<small>climbs <span data-k="raceUpW">30</span> m, stairs allowed</small></div><div><div class="tm"><span>0.0</span><small>min</small></div><div class="flag"></div></div></div>
+        <div class="racer ghost" id="r-bus"><svg class="ico ico-bus"><use href="#i-bus"/></svg><div class="nm">Shuttle<small>walk to stop + wait + ride: not measured yet</small></div><div><div class="tm">?<small>min</small></div><div class="flag" style="opacity:1"><span class="pending">data pending</span></div></div></div>
+      </div>
+      <div class="rv" style="--d:550; margin-top:16px;"><div class="small" style="margin-bottom:2px; font-size:14px;">Height along the route (m) · distance (km)</div><div id="ch-profile"></div></div>
+      <div class="rv" style="--d:650; margin-top:8px;"><button class="btn" id="race-replay">↻ Replay</button></div>
+    </div>
+    <div class="notes">Let's race. Two students leave South Dorms for Huiwen at the same moment. The rider takes the road route; the walker takes the model's fastest path, stairs included. Both have to climb about 30 metres. Watch the clock: the rider arrives after about six and a half minutes. The walker needs about 20, so the rider has 14 minutes to spare. The shuttle is the third lane, but I have no measurements for it yet.</div>
+  </section>
+
+  <!-- ============================================================ 7 · Board -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="Head to head" data-title="Dorm to class">
+    <div class="eyebrow rv">06 · Dorm to class</div>
+    <h2 class="split">Your dorm <em>decides</em> your morning</h2>
+    <div class="rv" style="--d:250; margin-top:22px;" id="board-host"></div>
+    <p class="rv small" style="--d:500; margin-top:14px;">Minutes, off-peak, modelled at my pace. <b>WALK</b> when a bike saves under 4 minutes (unlocking and parking eat the rest). <b>RIDE ↑</b> = climbs 15 m or more: leave a minute early.</p>
+    <div class="notes">This is a departure board for your mornings: from each dorm to each teaching building, walking time, riding time, and a recommendation. Where you live matters a lot. From South Dorms, Zhili and Zhizhen are a three to six minute walk, but Huiwen is twenty. From Qiao Dorms, everything is at least a quarter of an hour on foot, so riding wins every time. The shuttle column is empty for now: no data.</div>
+  </section>
+
+  <!-- ============================================================ 8 · Breaks -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="Head to head" data-title="Between classes">
+    <div class="eyebrow rv">07 · Between classes</div>
+    <h2 class="split" style="max-width:1300px;">On foot, a third of building pairs don’t fit <em>even a 20-minute</em> break</h2>
+    <div class="col" style="left:96px; top:290px;"><div class="rv legend" style="--d:200; margin-bottom:6px;"><span><i class="dot k-walk"></i>Walk</span><span><i class="dot k-bike"></i>Ride</span><span class="small" style="font-size:14px;">slower direction of each pair · off-peak · +1 min to leave and enter buildings</span></div><div class="rv" style="--d:250" id="ch-breaks"></div></div>
+    <div class="col" style="left:1130px; top:300px; width:374px;">
+      <div class="rv small" style="--d:400; margin-bottom:10px;">Building pairs (of <span data-k="nTeachPairs">15</span>) that fit a break of…</div>
+      <div class="rv" style="--d:450" id="breaks-table"></div>
+      <div class="callout c-bike rv" style="--d:800; margin-top:28px;"><h4>Switching sides of campus?</h4><p>Huiwen to the south cluster takes <b><span data-k="hwSouthWalk">20–25</span> min</b> on foot, <b><span data-k="hwSouthBike">6–8</span> min</b> by bike. Ride.</p></div>
+    </div>
+    <div class="notes">Our breaks are 5, 10 or 20 minutes, and you need about a minute to leave one building and enter another. On foot, only one of the fifteen pairs of teaching buildings fits a five-minute break, and five pairs don't even fit the twenty-minute break: anything between Huiwen and the southern cluster. By bike, every single pair fits a ten-minute break.</div>
+  </section>
+
+  <!-- ============================================================ 9 · Reach -->
+  <section class="slide" data-map="iso" data-veil="right" data-sec="Head to head" data-title="Reach">
+    <div class="col" style="left:960px; top:104px; width:544px;">
+      <div class="eyebrow rv">08 · Reach</div>
+      <h2 class="split" style="font-size:46px;">5 minutes on a bike reach <em>as far as</em> 15 on foot</h2>
+      <div class="rv btn-row" style="--d:300; margin-top:24px;" id="iso-origins"></div>
+      <div class="rv" style="--d:400; margin-top:22px; display:flex; align-items:baseline; gap:12px;"><span class="small">Clock</span><span id="iso-clock" style="font-size:44px; font-weight:700; letter-spacing:-.03em; font-variant-numeric:tabular-nums;">0:00</span><span class="small">min:sec</span></div>
+      <div class="rv" style="--d:450; margin-top:6px;" id="iso-rows"></div>
+      <p class="rv small" style="--d:600; margin-top:12px; font-size:14px;">Places = the 19 other dorms, buildings, canteens and libraries on the map. Coloured roads = everywhere you can be by then.</p>
+    </div>
+    <div class="notes">Another way to see speed is reach: how much of campus you can get to in a given time. Blue spreads at walking speed, orange at riding speed, both starting together. From Qiao Dorms, ten minutes on foot reaches only four places. Ten minutes on a bike reaches all nineteen. As a rule of thumb, five minutes on a bike gets you as far as fifteen on foot.</div>
+  </section>
+
+  <!-- ============================================================ 10 · Hills & steps -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="Head to head" data-title="Hills and steps">
+    <div class="eyebrow rv">09 · Hills & steps</div>
+    <h2 class="split">Hills and steps punish the bike, <em>not the walker</em></h2>
+    <div class="col" style="left:96px; top:270px;"><div class="rv" style="--d:250" id="ch-slope"></div></div>
+    <div class="col" style="left:880px; top:270px;"><div class="rv" style="--d:400" id="ch-class"></div></div>
+    <p class="col rv small" style="--d:900; left:96px; top:740px; width:1400px; font-size:16px; color:var(--ink-2);">Riding <b>up</b> to Huiwen or Sci-Tech takes <b><span data-k="asymRange">15–19</span>%</b> longer than riding down, about <b>one minute</b>. On foot the difference is under <b><span data-k="asymWalk">2</span>%</b>.</p>
+    <div class="notes">Here's why direction and terrain matter. On the left: a 5 percent uphill makes a bike about 24 percent slower, but a walker only about 4 percent. On the right: special paths. Footbridges double a cyclist's time, and steps mean pushing the bike, about six times slower. A walker barely notices footbridges, and steps cost only about twice the time. So riding up to Huiwen takes about a minute longer than riding down; walking is nearly the same both ways.</div>
+  </section>
+
+  <!-- ============================================================ 11 · Rush & reliability -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="Head to head" data-title="Rush hour & reliability">
+    <div class="eyebrow rv">10 · Rush hour & reliability</div>
+    <h2 class="split">Riding is faster. Walking is <em>more predictable</em>.</h2>
+    <div class="col" style="left:96px; top:270px; width:600px;">
+      <div class="rv small" style="--d:200; margin-bottom:12px;">At class change (17-minute windows around every bell)</div>
+      <div class="tiles" style="grid-template-columns:1fr 1fr;">
+        <div class="tile rv" style="--d:300"><div class="lbl"><i class="dot k-bike"></i>Ride on shared paths</div><div class="val">×<span data-count="peakBike" data-dec="2">1.26</span></div><div class="sub">the time, dodging crowds · <span data-k="nPeakBike">21</span> observations</div></div>
+        <div class="tile rv" style="--d:400"><div class="lbl"><i class="dot k-walk"></i>Walk</div><div class="val">×<span data-count="peakWalk" data-dec="2">1.00</span></div><div class="sub">no measurable slowdown · <span data-k="nPeakWalk">43</span> observations</div></div>
+      </div>
+      <div class="rv" style="--d:550; margin-top:18px;" id="ch-peak"></div>
+      <p class="rv small" style="--d:700; margin-top:10px; font-size:14px;">Roads at peak are not modelled: when I'm late I ride faster, and the data can't tell that apart from traffic.</p>
+    </div>
+    <div class="col" style="left:780px; top:270px; width:724px;">
+      <div class="rv small" style="--d:300; margin-bottom:6px;">How far off was the prediction? Each dot is one track the model never saw.</div>
+      <div class="rv" style="--d:350" id="ch-err"></div>
+      <div class="callout rv" style="--d:900; margin-top:12px;"><h4>Plan a buffer</h4><p>Add about <b>10%</b> to a walk and <b>25%</b> to a ride. Most of the cycling error is how fast you happen to ride that day.</p></div>
+    </div>
+    <div class="notes">Two more differences. At class change, cyclists on shared footways take about 26 percent longer because of the crowds; walkers show no measurable slowdown. And predictability: I hid each track from the model and predicted it. Walking predictions were off by about 10 percent; cycling by about 23. So when you plan, add about 10 percent to a walk and a quarter to a ride.</div>
+  </section>
+
+  <!-- ============================================================ 12 · Shuttle -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="The shuttle" data-title="The missing mode">
+    <div class="eyebrow rv">11 · The missing mode</div>
+    <h2 class="split">No shuttle data yet, but the shuttle has <em class="bus">a budget</em></h2>
+    <div class="col" style="left:96px; top:270px; width:640px;">
+      <div class="rv small" style="--d:200; margin-bottom:10px;">Anatomy of one trip: South Dorms → Huiwen (minutes)</div>
+      <div class="rv" style="--d:250" id="ch-anatomy"></div>
+      <div class="callout c-bus rv" style="--d:900; margin-top:22px;"><h4>The shuttle competes with walking, not with the bike</h4><p>It wins on long, uphill trips, as long as the walk to the stop and the wait stay short. To beat a bike it would have to arrive almost the moment you reach the stop.</p></div>
+    </div>
+    <div class="col" style="left:800px; top:262px; width:704px;">
+      <div class="rv" style="--d:300; display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:6px;">
+        <div class="small" style="max-width:380px;">How long can the shuttle keep you <b>walking to the stop + waiting</b>, and still beat…</div>
+        <div class="slider"><span>assumed speed</span><input type="range" id="bus-speed" min="10" max="25" step="1" value="15"><b id="bus-speed-v">15 km/h</b></div>
+      </div>
+      <div class="rv legend" style="--d:320; margin-bottom:4px;"><span><i class="key k-walk"></i>…walking</span><span><i class="key k-bike" style="width:4px;height:14px;"></i>…riding</span><span class="small" style="font-size:13.5px;">20 longest dorm-to-class trips · scenario, not measured</span></div>
+      <div class="rv" style="--d:350" id="ch-budget"></div>
+    </div>
+    <div class="notes">Now the missing mode. I have no shuttle data yet, but I can still say something useful. A shuttle trip has four parts: walk to the stop, wait, ride, and walk to the door. The ride itself is quick, so the question is how long the first part can take. On the right, for the twenty longest dorm-to-class trips, the blue bar is how much walking-to-the-stop and waiting the shuttle can afford and still beat walking. The orange tick is the same for the bike, and it's close to zero everywhere. You can change the assumed bus speed: the conclusion doesn't change. The shuttle competes with walking, not with the bike.</div>
+  </section>
+
+  <!-- ============================================================ 13 · Scorecard -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="Verdict" data-title="Pros and cons">
+    <div class="eyebrow rv">12 · Verdict</div>
+    <h2 class="split">Pros and cons <em>at a glance</em></h2>
+    <div class="rv" style="--d:200; margin-top:28px;" id="scorecard"></div>
+    <div class="rv legend" style="--d:600; margin-top:14px; font-size:14px;"><span class="pips" style="--c:var(--ink-2)"><i class="on" style="opacity:1;transform:none"></i></span>measured<span class="pips" style="--c:var(--bus)"><i class="exp" style="opacity:1;transform:none"></i></span>expected, not yet measured<span style="color:var(--bus); font-weight:700;">?</span>unknown until we have data</div>
+    <div class="notes">Putting it together. Walking wins on hills, rush hour and predictability. Riding wins on speed, reach and fitting short breaks, but it suffers on hills, steps and crowded paths. The shuttle should win on effort and weather, and it doesn't care about the hill, but its speed, its crowding and above all its waiting time are still question marks.</div>
+  </section>
+
+  <!-- ============================================================ 14 · Students -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="Verdict" data-title="Advice for students">
+    <div class="eyebrow rv">13 · Advice for students</div>
+    <h2 class="split">Walk short. Ride long. <em class="bus">Wait smart.</em></h2>
+    <div class="col" style="left:96px; top:268px; width:760px; display:grid; gap:14px;" id="rules">
+      <div class="rule rv" data-mode="walk" style="--d:250; --c:var(--walk); --w:var(--walk-wash);"><div class="badge"><svg class="ico ico-walk drawme" style="--d:250"><use href="#i-walk"/></svg></div><div><h3>Walk <span>· under ~300 m, or next door</span></h3><p>The bike saves under 2 minutes, which unlocking and parking eat. Zhili&nbsp;⇄&nbsp;Zhizhen: <b><span data-k="zlzzWalk">3.4</span> min</b> on foot.</p></div></div>
+      <div class="rule rv" data-mode="bike" style="--d:380; --c:var(--bike); --w:var(--bike-wash);"><div class="badge"><svg class="ico ico-bike drawme" style="--d:380"><use href="#i-bike"/></svg></div><div><h3>Ride <span>· crossing the hill, or over ~1 km</span></h3><p>Huiwen → Zhili: <b><span data-k="hwzlWalk">20.0</span> min</b> on foot, <b><span data-k="hwzlBike">5.7</span> min</b> by bike. Going up? Leave a minute early.</p></div></div>
+      <div class="rule rv" data-mode="bus" style="--d:510; --c:var(--bus); --w:var(--bus-wash);"><div class="badge" style="outline:1.5px dashed var(--bus); outline-offset:-1.5px;"><svg class="ico ico-bus drawme" style="--d:510"><use href="#i-bus"/></svg></div><div><h3>Wait <span>· rain, heat, heavy bags, or an injury</span></h3><p>Long uphill trips, when the shuttle is close. Check the wait first: past ~10 minutes, walking wins.</p></div></div>
+    </div>
+    <div class="col" style="left:920px; top:268px; width:584px;">
+      <div class="rv small" style="--d:500; margin-bottom:8px;">Try it</div>
+      <div class="rv" style="--d:550; display:grid; gap:6px;" id="cases"></div>
+      <div class="rv small" style="--d:700; margin:26px 0 12px;">And four habits</div>
+      <ul class="tip-list rv" style="--d:750;">
+        <li data-n="01"><span>At class change, ride on <b>roads</b>, not footways (<b>×<span data-k="peakBike">1.26</span></b>).</span></li>
+        <li data-n="02"><span>Avoid <b>steps and footbridges</b> on a bike: push = <b>×<span data-k="stepsBike">6.5</span></b> the time.</span></li>
+        <li data-n="03"><span>Pad a ride by <b>25%</b>, a walk by <b>10%</b>.</span></li>
+        <li data-n="04"><span>Short break, far building: <b>ride</b> or sit near the door.</span></li>
+      </ul>
+    </div>
+    <div class="notes">So my advice fits in six words: walk short, ride long, wait smart. Walk anything under about 300 metres or next door. Ride when you cross the hill or go further than a kilometre, and leave a minute early when you're going up. Take the shuttle when it rains, when it's hot, when you carry something heavy, or when you're injured, but check the wait first. On the right you can see a few examples, and four small habits that save time.</div>
+  </section>
+
+  <!-- ============================================================ 15 · Campus -->
+  <section class="slide" data-map="steps" data-veil="left" data-sec="Verdict" data-title="Advice for the campus">
+    <div class="col" style="left:96px; top:104px; width:780px;">
+      <div class="eyebrow rv">14 · Advice for the campus</div>
+      <h2 class="split" style="max-width:780px;">Four changes that would help <em>every mode</em></h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:30px;">
+        <div class="ccard rv" style="--d:250"><div class="n"><i class="dot k-bike"></i>Ramps</div><h3>Ramps beside steps</h3><p>Steps cut the bike network into pieces and force detours.</p><div class="ev"><b><span data-k="nSteps">49</span></b><span>flights of steps on the map · push ×<span data-k="stepsBike">6.5</span></span></div></div>
+        <div class="ccard rv" style="--d:340"><div class="n"><i class="dot k-bike"></i>Parking</div><h3>Bike parking at the door</h3><p>Every minute saved unlocking and parking makes short rides worth it.</p><div class="ev"><b>~<span data-k="breakEven">250</span> m</b><span>break-even with a 2-min overhead</span></div></div>
+        <div class="ccard rv" style="--d:430"><div class="n"><i class="dot k-bus"></i>Shuttle</div><h3>A shuttle for the climb</h3><p>Run it north–south, timed to the breaks, with live arrival times.</p><div class="ev"><b><span data-k="raceWalk">20.6</span> min</b><span>South Dorms → Huiwen on foot, +<span data-k="raceUpW">30</span> m</span></div></div>
+        <div class="ccard rv" style="--d:520"><div class="n"><i class="dot k-walk"></i>Flows</div><h3>Separate flows at the bell</h3><p>Mark bike lanes on the busiest shared paths.</p><div class="ev"><b>×<span data-k="peakBike">1.26</span></b><span>cycling time on shared paths at peak</span></div></div>
+      </div>
+    </div>
+    <div class="notes">I also have four suggestions for the campus. First, ramps next to steps: there are about fifty flights of steps on the map, and each one forces cyclists to push or detour. Second, bike parking right at the building doors, so that short rides are worth it. Third, a shuttle that runs the climb, north to south, timed to our breaks, with live arrival times so nobody waits blindly. And fourth, bike lanes on the busiest shared paths, where cyclists lose a quarter of their time at the bell.</div>
+  </section>
+
+  <!-- ============================================================ 16 · Next steps -->
+  <section class="slide" data-map="faint" data-veil="full" data-sec="Verdict" data-title="Next steps">
+    <div class="eyebrow rv">15 · Limitations & next steps</div>
+    <h2 class="split">What we still need to <em class="bus">measure</em></h2>
+    <div class="col" style="left:96px; top:270px; width:720px;">
+      <ul class="lim">
+        <li class="rv" style="--d:250"><span><b>One rider, <span data-k="nTracks">25</span> tracks.</b> My pace is not your pace; most roads fall back to their road-type average.</span></li>
+        <li class="rv" style="--d:330"><span><b>Few rush-hour rides</b> (<span data-k="nPeakBike">21</span> observations on shared paths).</span></li>
+        <li class="rv" style="--d:410"><span><b>Unlocking and parking</b> were not timed.</span></li>
+        <li class="rv" style="--d:490"><span><b>Places are building centroids:</b> real doors add tens of seconds.</span></li>
+        <li class="rv bus" style="--d:570"><span><b>No shuttle trips yet:</b> walk to stop, waiting time, ride time, crowding.</span></li>
+      </ul>
+      <div class="callout c-bus rv" style="--d:750; margin-top:30px;"><h4>Help fill the third column</h4><p>The commute logger already has a <b>shuttle</b> button and times the wait. Goal: <b>30+ shuttle trips</b>, at peak and off-peak.<br><span style="font-size:20px; font-weight:680; color:var(--ink); letter-spacing:-.01em;">85.211.195.104/commute</span></p></div>
+    </div>
+    <div class="col rv-x" style="--d:400; left:1070px; top:250px;">
+      <div class="phone"><div class="notch"></div><div class="scr">
+        <h5>Campus commute log</h5><div class="sub">Tap a mode, then Start</div>
+        <div class="mg">
+          <div class="mb"><svg class="ico ico-walk" style="stroke-width:2.6"><use href="#i-walk"/></svg>Walk</div>
+          <div class="mb"><svg class="ico ico-bike" style="stroke-width:2.6"><use href="#i-bike"/></svg>Bike</div>
+          <div class="mb on"><svg class="ico ico-bus" style="stroke-width:2.6"><use href="#i-bus"/></svg>Shuttle</div>
+        </div>
+        <div class="fld">From<div>South Dorms</div></div>
+        <div class="fld">To<div>Huiwen</div></div>
+        <div class="timer" id="phone-timer">03:12</div>
+        <div class="wait"><span>waiting for shuttle</span><span>GPS ±6 m</span></div>
+        <div class="go">Boarded</div>
+      </div></div>
+    </div>
+    <div class="notes">To be honest about the limits: this is one person's data, 25 tracks, with only a few rush-hour rides. I didn't time unlocking and parking, and the places are building centres, not real doors. Most importantly, there are no shuttle trips yet. The good news is that the commute logger is already online and has a shuttle button that times your wait. If thirty of us log a few shuttle trips, I can fill in the third column.</div>
+  </section>
+
+  <!-- ============================================================ 17 · Thanks -->
+  <section class="slide" data-map="finale" data-veil="left" data-sec="Verdict" data-title="Thank you">
+    <div class="col" style="left:96px; top:200px; width:860px;">
+      <div class="eyebrow rv">Thank you</div>
+      <h1 class="split" style="font-size:124px;">Questions?</h1>
+      <div class="rv" style="--d:450; margin-top:36px; display:flex; gap:30px; font-size:26px; font-weight:650; letter-spacing:-.015em;">
+        <span><i class="key k-walk" style="width:26px;height:4px;"></i>Walk short.</span><span><i class="key k-bike" style="width:26px;height:4px;"></i>Ride long.</span><span><i class="key k-bus" style="width:26px;height:4px;"></i>Wait smart.</span>
+      </div>
+      <div class="rv" style="--d:650; margin-top:48px; display:grid; grid-template-columns:auto auto; gap:6px 40px; font-size:17px; color:var(--ink-2); width:max-content;">
+        <span class="small">Live map</span><span class="small">Log your trips</span>
+        <b style="font-size:21px; color:var(--ink);">85.211.195.104/trackstudy</b><b style="font-size:21px; color:var(--ink);">85.211.195.104/commute</b>
+      </div>
+      <div class="rv small" style="--d:800; margin-top:26px; font-size:14px;">Data: own GPS tracks · OpenStreetMap · DirMap shared terrain. Model updated <span data-k="generated">2026-11-04</span>.</div>
+    </div>
+    <div class="notes">Thank you. In short: walk short, ride long, wait smart. The live map updates itself whenever a new track is uploaded, and the logger is open for your shuttle trips. I'm happy to take questions.</div>
+  </section>
+</div>
+</div>
+
+<div class="overlay" id="notes"><div class="t">Speaker notes · <span id="notes-n"></span></div><div id="notes-body"></div></div>
+<div class="overlay" id="help"><div><kbd>→</kbd><kbd>Space</kbd> next &nbsp; <kbd>←</kbd> previous &nbsp; <kbd>Home</kbd><kbd>End</kbd> first / last<br><kbd>N</kbd> speaker notes &nbsp; <kbd>D</kbd> data behind the chart<br><kbd>T</kbd> light / dark theme &nbsp; <kbd>F</kbd> fullscreen<br><kbd>R</kbd> replay this slide &nbsp; <kbd>?</kbd> this help &nbsp; <kbd>Esc</kbd> close</div></div>
+<div class="overlay" id="table"><div class="t">Data behind this slide</div><div id="table-body"></div></div>
+
+<script src="deck-data.js"></script>
+<script src="map.js"></script>
+<script src="charts.js"></script>
+<script src="deck.js"></script>
+</body>
+</html>
