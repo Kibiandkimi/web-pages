@@ -1,0 +1,18 @@
+{
+  "created_at": "2026-11-05T12:02:54Z",
+  "description": "方式 C：直接从一个 raw 链接抓 HTML 部署。",
+  "file_count": 1,
+  "issue": 3,
+  "size_bytes": 16428,
+  "slug": "remote-demo",
+  "source": {
+    "type": "url",
+    "url": "https://raw.githubusercontent.com/Kibiandkimi/focus/main/index.html"
+  },
+  "status": "active",
+  "tags": [
+    "测试"
+  ],
+  "title": "远程网址方式测试",
+  "updated_at": "2026-11-05T12:02:54Z"
+}
