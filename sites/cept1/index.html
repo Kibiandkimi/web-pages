@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uphill Both Ways — Travel efficiency on SZU Yuehai Campus</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0d0e10;
+  --surface: #111214;
+  --card: rgba(255, 255, 255, 0.035);
+  --ink: #f4f1ea;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #26272a;
+  --axis: #3a3b3e;
+  --hair: rgba(255, 255, 255, 0.09);
+  --walk: #3987e5;
+  --bike: #d95926;
+  --dirmap: #199e70;
+  --down: #9085e9;
+  --up: #d95926;
+  --critical: #d03b3b;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --font: "Inter", "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #060607; overflow: hidden; }
+body { font-family: var(--font); color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+#viewport { position: fixed; inset: 0; display: grid; place-items: center; }
+#stage {
+  position: relative; width: 1600px; height: 900px; flex: none; overflow: hidden;
+  transform-origin: center center;
+  background:
+    radial-gradient(1200px 700px at 78% 30%, rgba(57, 135, 229, 0.07), transparent 60%),
+    radial-gradient(900px 600px at 10% 90%, rgba(217, 89, 38, 0.06), transparent 60%),
+    var(--bg);
+}
+#grain { position: absolute; inset: 0; pointer-events: none; opacity: .05; mix-blend-mode: overlay; z-index: 50;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+#map { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 50% 50%; will-change: transform; z-index: 1; }
+
+/* ---------- chrome ---------- */
+.chrome { position: absolute; z-index: 40; pointer-events: none; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+#brand { top: 34px; left: 64px; display: flex; gap: 14px; align-items: center; }
+#brand b { color: var(--ink-2); font-weight: 600; }
+#brand i { width: 22px; height: 1px; background: var(--axis); display: inline-block; }
+#section { top: 34px; right: 64px; text-align: right; transition: opacity .5s; }
+#counter { bottom: 30px; right: 64px; font-variant-numeric: tabular-nums; }
+#counter b { color: var(--ink); font-weight: 600; }
+#progress { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: rgba(255,255,255,.05); z-index: 40; }
+#progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--walk), var(--bike)); transition: width .9s var(--ease); }
+#hint { bottom: 30px; left: 64px; transition: opacity .8s; }
+.navbtn { position: absolute; z-index: 41; bottom: 22px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--hair);
+  background: rgba(255,255,255,.03); color: var(--ink-2); font-size: 15px; cursor: pointer; transition: background .3s, color .3s; }
+.navbtn:hover { background: rgba(255,255,255,.1); color: var(--ink); }
+#prev { right: 178px; } #next { right: 136px; }
+
+/* ---------- slides ---------- */
+.slide { position: absolute; inset: 0; padding: 104px 96px 88px; visibility: hidden; pointer-events: none; z-index: 10; --dir: 1; }
+.slide.active { visibility: visible; pointer-events: auto; }
+.slide.leaving { visibility: visible; animation: slide-out .6s cubic-bezier(.5, 0, .2, 1) forwards; }
+@keyframes slide-out { to { opacity: 0; transform: translateY(calc(var(--dir) * -34px)) scale(.985); filter: blur(7px); } }
+.slide.active .rv { animation: rv-in 1s var(--ease) both; animation-delay: calc(var(--d, 0) * 1ms + 420ms); }
+@keyframes rv-in { from { opacity: 0; transform: translateY(calc(var(--dir) * 30px)); filter: blur(10px); } }
+.slide.active .rv-wipe { animation: rv-wipe 1.2s var(--ease) both; animation-delay: calc(var(--d, 0) * 1ms + 420ms); }
+@keyframes rv-wipe { from { clip-path: inset(0 100% 0 0); opacity: .2; } to { clip-path: inset(0 0 0 0); } }
+.slide.active .rv-pop { animation: rv-pop .9s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: calc(var(--d, 0) * 1ms + 420ms); }
+@keyframes rv-pop { from { opacity: 0; transform: scale(.85); filter: blur(6px); } }
+.split .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .14em; margin-bottom: -.14em; }
+.split .w > span { display: inline-block; }
+.slide.active .split .w > span { animation: word-in 1.1s var(--ease) both; animation-delay: calc(var(--wd) * 1ms + 380ms); }
+@keyframes word-in { from { transform: translateY(108%) rotate(3deg); opacity: 0; } }
+
+.eyebrow { font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.eyebrow::before { content: ""; width: 28px; height: 1px; background: linear-gradient(90deg, var(--walk), var(--bike)); }
+h1 { font-size: 132px; line-height: .95; font-weight: 650; letter-spacing: -.045em; }
+h2 { font-size: 50px; line-height: 1.08; font-weight: 620; letter-spacing: -.03em; max-width: 1100px; }
+h2 em, h1 em { font-style: normal; background: linear-gradient(100deg, #8fbaf0 0%, #f2a27a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { font-size: 23px; line-height: 1.5; color: var(--ink-2); max-width: 640px; margin-top: 26px; font-weight: 400; }
+.small { font-size: 15px; line-height: 1.55; color: var(--muted); }
+.ink2 { color: var(--ink-2); }
+.col { position: absolute; }
+.k-walk, .k-bike, .k-down, .k-up, .k-dirmap { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+.k-walk { background: var(--walk); } .k-bike { background: var(--bike); } .k-down { background: var(--down); } .k-up { background: var(--up); } .k-dirmap { background: var(--dirmap); }
+.dot-k { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 8px; }
+
+/* stat tiles */
+.tiles { display: grid; gap: 18px; }
+.tile { background: var(--card); border: 1px solid var(--hair); border-radius: 18px; padding: 22px 24px 20px; backdrop-filter: blur(6px); }
+.tile .lbl { font-size: 14px; color: var(--muted); letter-spacing: .02em; }
+.tile .val { font-size: 52px; font-weight: 620; letter-spacing: -.035em; margin: 6px 0 4px; line-height: 1.05; }
+.tile .val small { font-size: 22px; font-weight: 500; color: var(--ink-2); margin-left: 4px; letter-spacing: 0; }
+.tile .sub { font-size: 14px; color: var(--ink-2); line-height: 1.45; }
+
+/* pipeline */
+.pipe { position: absolute; left: 96px; right: 96px; top: 380px; height: 360px; }
+.pipe svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.step { position: absolute; top: 0; width: 210px; }
+.step .num { width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--hair); background: var(--surface); display: grid; place-items: center;
+  font-size: 18px; font-weight: 600; color: var(--ink); position: relative; transition: border-color .4s, box-shadow .4s; }
+.step.lit .num { border-color: rgba(244,241,234,.6); box-shadow: 0 0 0 6px rgba(244,241,234,.05), 0 0 28px rgba(143,186,240,.25); }
+.step h3 { font-size: 21px; font-weight: 600; margin: 26px 0 10px; letter-spacing: -.01em; }
+.step p { font-size: 15.5px; line-height: 1.5; color: var(--ink-2); }
+.step p b { color: var(--ink); font-weight: 600; }
+
+/* cards */
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.card { background: var(--card); border: 1px solid var(--hair); border-radius: 20px; padding: 26px 28px; }
+.card .ix { font-size: 13px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+.card h3 { font-size: 26px; font-weight: 620; margin: 10px 0 8px; letter-spacing: -.02em; }
+.card p { font-size: 16.5px; line-height: 1.5; color: var(--ink-2); }
+
+/* lists */
+.facts { list-style: none; display: grid; gap: 18px; }
+.facts li { display: grid; grid-template-columns: 34px 1fr; font-size: 19px; line-height: 1.5; color: var(--ink-2); }
+.facts li b { color: var(--ink); font-weight: 600; }
+.facts li::before { content: attr(data-n); font-size: 13px; color: var(--muted); padding-top: 5px; font-variant-numeric: tabular-nums; }
+
+/* legend */
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14.5px; color: var(--ink-2); align-items: center; }
+.ramp { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--ink-2); }
+.ramp .bar { height: 8px; width: 220px; border-radius: 4px; }
+.swatches { display: flex; gap: 2px; }
+.swatches i { width: 44px; height: 8px; display: block; }
+.swatches i:first-child { border-radius: 4px 0 0 4px; } .swatches i:last-child { border-radius: 0 4px 4px 0; }
+.sw-lbl { display: flex; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sw-lbl span { width: 46px; }
+
+/* charts */
+svg text { font-family: var(--font); }
+.ax text { fill: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ax line, .ax path { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+.ax .base { stroke: var(--axis); }
+.lbl-ink { fill: var(--ink); font-size: 14px; font-weight: 600; }
+.lbl-2 { fill: var(--ink-2); font-size: 13.5px; }
+.lbl-m { fill: var(--muted); font-size: 12.5px; }
+.draw { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.play .draw { transition: stroke-dashoffset 1.6s cubic-bezier(.65, 0, .35, 1); transition-delay: calc(var(--d, 0) * 1ms); stroke-dashoffset: 0; }
+.grow { transform: scaleX(0); transform-box: fill-box; transform-origin: left center; }
+.play .grow { transition: transform 1.1s var(--ease); transition-delay: calc(var(--d, 0) * 1ms); transform: scaleX(1); }
+.growy { transform: scaleY(0); transform-box: fill-box; transform-origin: center bottom; }
+.play .growy { transition: transform 1s var(--ease); transition-delay: calc(var(--d, 0) * 1ms); transform: scaleY(1); }
+.pop { opacity: 0; transform: scale(.2); transform-box: fill-box; transform-origin: center; }
+.play .pop { transition: transform .7s cubic-bezier(.34, 1.56, .64, 1), opacity .4s; transition-delay: calc(var(--d, 0) * 1ms); opacity: 1; transform: scale(1); }
+.fade { opacity: 0; }
+.play .fade { transition: opacity .8s; transition-delay: calc(var(--d, 0) * 1ms); opacity: 1; }
+.hit { fill: transparent; cursor: default; }
+.mark-hover { transition: filter .2s, opacity .2s; }
+.mark-hover.on { filter: brightness(1.35); }
+
+#tip { position: absolute; z-index: 60; pointer-events: none; background: rgba(22, 23, 26, .96); border: 1px solid rgba(255,255,255,.12); border-radius: 10px;
+  padding: 10px 12px; font-size: 13.5px; color: var(--ink-2); box-shadow: 0 12px 40px rgba(0,0,0,.45); opacity: 0; transform: translateY(4px);
+  transition: opacity .15s, transform .15s; min-width: 140px; }
+#tip.on { opacity: 1; transform: none; }
+#tip .t { color: var(--muted); font-size: 12px; letter-spacing: .04em; margin-bottom: 6px; }
+#tip .r { display: flex; align-items: center; gap: 8px; margin-top: 3px; white-space: nowrap; }
+#tip .r b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+#tip .r i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+
+/* matrix */
+.mx { display: grid; gap: 2px; }
+.mx .h { font-size: 13.5px; color: var(--muted); display: flex; align-items: center; }
+.mx .h.col-h { justify-content: center; text-align: center; }
+.mx .c { border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-variant-numeric: tabular-nums;
+  position: relative; transition: transform .25s, box-shadow .25s; cursor: default; }
+.mx .c:hover { transform: scale(1.06); z-index: 2; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+.mx .c b { font-size: 21px; font-weight: 650; letter-spacing: -.02em; }
+.mx .c span { font-size: 12px; opacity: .8; margin-top: 1px; }
+.mx .c.diag { background: rgba(255,255,255,.02); color: var(--muted); }
+.slide.active .mx .c:not(.diag) { animation: cell-in .8s cubic-bezier(.34, 1.4, .64, 1) both; animation-delay: calc(var(--cd) * 1ms + 700ms); }
+@keyframes cell-in { from { opacity: 0; transform: scale(.6) rotateX(60deg); } }
+
+/* race */
+.racer { display: grid; grid-template-columns: 1fr auto; align-items: end; padding: 18px 0; border-bottom: 1px solid var(--hair); }
+.racer .nm { font-size: 18px; color: var(--ink); font-weight: 600; }
+.racer .nm small { display: block; font-size: 14px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+.racer .tm { font-size: 58px; font-weight: 620; letter-spacing: -.04em; font-variant-numeric: tabular-nums; line-height: 1; }
+.racer .tm small { font-size: 20px; color: var(--ink-2); font-weight: 500; margin-left: 4px; letter-spacing: 0; }
+.racer .dl { font-size: 14px; color: var(--ink-2); margin-top: 6px; text-align: right; height: 18px; opacity: 0; transition: opacity .5s; }
+.racer.done .dl { opacity: 1; }
+.racer .sw { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; vertical-align: 1px; box-shadow: 0 0 0 2px var(--surface), 0 0 14px currentColor; }
+.btn { font: inherit; font-size: 14px; color: var(--ink); background: rgba(255,255,255,.05); border: 1px solid var(--hair); border-radius: 999px;
+  padding: 8px 16px; cursor: pointer; transition: background .25s, border-color .25s, color .25s; }
+.btn:hover { background: rgba(255,255,255,.1); }
+.btn.on { background: var(--ink); color: #111; border-color: var(--ink); }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* iso */
+.iso-row { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--hair); }
+.iso-row i { width: 22px; height: 6px; border-radius: 3px; display: block; }
+.iso-row .t { font-size: 17px; color: var(--ink-2); }
+.iso-row .t small { display: block; color: var(--muted); font-size: 13px; margin-top: 3px; max-width: 360px; line-height: 1.4; }
+.iso-row b { font-size: 30px; font-weight: 620; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.iso-row b small { font-size: 15px; color: var(--ink-2); font-weight: 500; margin-left: 3px; }
+
+/* takeaways */
+.take { display: grid; grid-template-columns: 70px 1fr; padding: 22px 0; border-top: 1px solid var(--hair); }
+.take .n { font-size: 40px; font-weight: 300; color: var(--muted); line-height: 1; }
+.take h3 { font-size: 24px; font-weight: 620; letter-spacing: -.015em; margin-bottom: 6px; }
+.take p { font-size: 17px; line-height: 1.5; color: var(--ink-2); }
+
+/* notes & help */
+#notes { position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 20px); width: min(980px, 92vw); z-index: 100; background: rgba(18, 19, 22, .94);
+  border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 16px 20px; font-size: 17px; line-height: 1.55; color: var(--ink-2);
+  opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; backdrop-filter: blur(10px); }
+#notes.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#notes .t { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+#help { position: fixed; inset: 0; z-index: 110; display: grid; place-items: center; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: opacity .3s; }
+#help.on { opacity: 1; pointer-events: auto; }
+#help div { background: #16171a; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 26px 32px; font-size: 16px; line-height: 2; color: var(--ink-2); }
+#help kbd { font-family: var(--font); background: rgba(255,255,255,.08); border-radius: 6px; padding: 2px 8px; color: var(--ink); margin-right: 8px; font-size: 14px; }
+.notes { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide.active .rv, .slide.active .rv-wipe, .slide.active .rv-pop, .slide.active .split .w > span, .slide.active .mx .c { animation-duration: .01s !important; animation-delay: 0s !important; }
+  .play .draw, .play .grow, .play .growy, .play .pop, .play .fade { transition-duration: .01s !important; transition-delay: 0s !important; }
+}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+  <canvas id="map"></canvas>
+  <div id="grain"></div>
+
+  <div class="chrome" id="brand"><b>Uphill Both Ways</b><i></i><span>SZU · Yuehai Campus</span></div>
+  <div class="chrome" id="section"></div>
+  <div class="chrome" id="counter"><b>01</b> / 17</div>
+  <div class="chrome" id="hint">← → navigate · N notes · F fullscreen · ? help</div>
+  <button class="navbtn" id="prev" aria-label="Previous slide">‹</button>
+  <button class="navbtn" id="next" aria-label="Next slide">›</button>
+  <div id="progress"><i></i></div>
+  <div id="tip"></div>
+
+  <!-- 1 · Title -->
+  <section class="slide" data-map="title" data-title="Shenzhen University">
+    <div class="col" style="left:96px; top:228px; width:780px;">
+      <div class="eyebrow rv">Shenzhen University · Yuehai Campus</div>
+      <h1 class="split">Uphill <em>Both</em> Ways</h1>
+      <p class="lead rv" style="--d:500; max-width:600px;">What 25 GPS tracks reveal about getting around campus: road by road, in both directions, on foot and by bike.</p>
+      <div class="rv small" style="--d:750; margin-top:60px; display:flex; gap:28px; letter-spacing:.06em; text-transform:uppercase; font-size:13px;">
+        <span>English Presentation</span><span>November 2026</span>
+      </div>
+      <div class="rv legend" style="--d:900; margin-top:22px;"><span><span class="dot-k" style="background:var(--walk)"></span>walking flow</span><span><span class="dot-k" style="background:var(--bike)"></span>cycling flow</span><span class="small">dots move at the model's speed for each road and direction</span></div>
+    </div>
+    <div class="notes">Good morning. Like many of you, I spend a lot of time getting from one end of our campus to the other. I recorded my own GPS tracks and used them to rebuild how fast you can actually travel on every road here, in both directions. The moving dots behind me are simulated walkers and cyclists, each moving at the speed my model predicts for that road and direction.</div>
+  </section>
+
+  <!-- 2 · Question -->
+  <section class="slide" data-map="ambient" data-title="01 · The question">
+    <div class="eyebrow rv">01 · The question</div>
+    <h2 class="split">A break between classes. Is the trip from A to B <em>the same</em> as from B to A?</h2>
+    <div class="rv" style="--d:300; margin-top:42px;"><div id="ch-breaks"></div></div>
+    <div class="cards" style="margin-top:36px;">
+      <div class="card rv" style="--d:500"><div class="ix">Direction</div><h3>Does uphill matter?</h3><p>How much slower is each road going up than coming down, on foot and on a bike?</p></div>
+      <div class="card rv" style="--d:620"><div class="ix">Commute</div><h3>Can I make it?</h3><p>Dorm to class, class to class: which trips fit in a 5, 10 or 20-minute break?</p></div>
+      <div class="card rv" style="--d:740"><div class="ix">Reach</div><h3>How far is "close"?</h3><p>How much of campus can you reach in 5, 10 or 15 minutes from where you live?</p></div>
+    </div>
+    <div class="notes">Our breaks are 5, 10 or 20 minutes. Huiwen to Zhili on foot takes about 20 minutes, plus a minute to get in and out of buildings, so it doesn't even fit the long break. That raised three questions: does direction matter, which trips actually fit, and how far is "close"?</div>
+  </section>
+
+  <!-- 3 · Data -->
+  <section class="slide" data-map="cover" data-title="02 · The data">
+    <div class="eyebrow rv">02 · The data</div>
+    <h2 class="split" style="max-width:640px;">25 tracks, one campus, <em>every road</em> both ways</h2>
+    <div class="tiles" style="grid-template-columns:repeat(2, 300px); margin-top:40px;">
+      <div class="tile rv" style="--d:250"><div class="lbl">GPS tracks</div><div class="val" data-count="25">0</div><div class="sub">7 walk · 5 run · 13 bike</div></div>
+      <div class="tile rv" style="--d:350"><div class="lbl">Distance recorded</div><div class="val"><span data-count="48.2" data-dec="1">0</span><small>km</small></div><div class="sub">26,149 GPS points</div></div>
+      <div class="tile rv" style="--d:450"><div class="lbl">Matched to roads</div><div class="val"><span data-count="88">0</span>–100<small>%</small></div><div class="sub">median offset 2–7 m (HMM map-matching)</div></div>
+      <div class="tile rv" style="--d:550"><div class="lbl">Road segments observed</div><div class="val" data-count="379">0</div><div class="sub">266 walked · 113 cycled</div></div>
+    </div>
+    <div class="rv legend" style="--d:700; margin-top:30px;"><span><span class="k-walk"></span>walked</span><span><span class="k-bike"></span>cycled</span><span><span class="k-walk" style="background:#4a4b4f"></span>rest of the network (2,069 segments)</span></div>
+    <p class="rv small" style="--d:800; margin-top:14px; max-width:620px;">Tracks are stored once on a shared server (DirMap) and re-analysed automatically. Only aggregates are published: no raw tracks, no timestamps.</p>
+    <div class="notes">The data: 25 tracks I recorded myself, about 48 kilometres in total. Each track is matched to OpenStreetMap roads with a hidden Markov model; 88 to 100 percent of points match, usually within a few metres. On the map, blue is road I walked and orange is road I cycled. Everything else is filled in by the model.</div>
+  </section>
+
+  <!-- 4 · Method -->
+  <section class="slide" data-map="ambient2" data-title="03 · Method">
+    <div class="eyebrow rv">03 · Method</div>
+    <h2 class="split">From raw GPS to a <em>directed</em> model of campus</h2>
+    <div class="pipe" id="pipe">
+      <svg width="1408" height="60" id="pipe-svg"></svg>
+    </div>
+    <div class="notes">Six steps. Upload the track and detect walking, running or cycling. Match every point to a road and a direction. Add the slope from a shared terrain model. Fit a robust regression that separates my personal pace from slope, road type and rush hour. Then plan routes on a directed graph, where A to B and B to A are separate edges, and finally test it on tracks the model has never seen.</div>
+  </section>
+
+  <!-- 5 · Hill -->
+  <section class="slide" data-map="hill" data-title="04 · Terrain">
+    <div class="col" style="left:930px; top:104px; width:580px;">
+      <div class="eyebrow rv">04 · Terrain</div>
+      <h2 class="split">The campus is <em>a hill</em></h2>
+      <p class="lead rv" style="--d:300;">Huiwen sits at about <b class="ink2" style="color:var(--ink)">33 m</b>. The southern teaching cluster (Zhili, Zhizhen, Zhixin) sits at <b style="color:var(--ink)">5–8 m</b>. Every trip between them climbs or drops about 25 m.</p>
+      <div class="rv" style="--d:450; margin-top:34px;" id="hill-bars"></div>
+      <div class="rv ramp" style="--d:600; margin-top:26px;"><span>2 m</span><span class="bar" id="elev-ramp"></span><span>35 m</span><span class="small">elevation · contours every 2 m</span></div>
+      <p class="rv small" style="--d:700; margin-top:14px;">Terrain: DirMap shared track-height model, 10 m grid. Slope is integrated every ~10 m and per direction, so a dip followed by a climb never cancels out to "flat".</p>
+    </div>
+    <div class="notes">This is why direction matters. The terrain comes from a shared elevation model built from many GPS tracks. The north of campus, around Huiwen, is about 25 metres higher than the southern teaching buildings. Contours are every 2 metres.</div>
+  </section>
+
+  <!-- 6 · Slope -->
+  <section class="slide" data-map="ambient3" data-title="05 · Slope">
+    <div class="eyebrow rv">05 · Slope</div>
+    <h2 class="split">Hills hurt <em>bikes</em>, barely walkers</h2>
+    <div class="rv legend" style="--d:250; margin-top:22px;">
+      <span><span class="k-bike"></span>This study, cycling</span><span><span class="k-walk"></span>This study, walking</span>
+      <span><span class="k-dirmap"></span>DirMap (independent fit)</span><span><span class="k-walk" style="background:repeating-linear-gradient(90deg,#898781 0 3px,transparent 3px 6px)"></span>Prior assumption</span>
+    </div>
+    <div class="rv" style="--d:300; margin-top:14px;" id="ch-slope"></div>
+    <div class="notes">Here is the slope effect. The y-axis is travel time relative to flat ground. For cycling, a 5 percent climb makes you about 24 percent slower and a 5 percent descent about 22 percent faster. An independent fit by the DirMap project gives almost the same curve, which is reassuring. Walking barely changes: about 4 percent slower uphill.</div>
+  </section>
+
+  <!-- 7 · Road type -->
+  <section class="slide" data-map="ambient4" data-title="06 · Road type">
+    <div class="eyebrow rv">06 · Road type</div>
+    <h2 class="split">Steps are <em>a wall</em> for cyclists</h2>
+    <div class="col" style="left:96px; top:300px;"><div class="rv legend" style="--d:250; margin-bottom:12px;"><span><span class="dot-k" style="background:var(--walk);border-radius:2px"></span>Walking</span><span><span class="dot-k" style="background:var(--bike);border-radius:2px"></span>Cycling</span><span class="small">speed relative to an ordinary campus road (= 1.0)</span></div><div class="rv" style="--d:300" id="ch-roads"></div></div>
+    <div class="col tiles" style="left:1040px; top:300px; width:460px;">
+      <div class="tile rv" style="--d:600"><div class="lbl">Cycling up steps (pushing)</div><div class="val"><span data-count="6.5" data-dec="1">0</span>×<small>the time</small></div><div class="sub">of the same distance on a road</div></div>
+      <div class="tile rv" style="--d:720"><div class="lbl">Walking up steps</div><div class="val"><span data-count="2.2" data-dec="1">0</span>×<small>the time</small></div><div class="sub">down is easier: 1.7×</div></div>
+      <div class="tile rv" style="--d:840"><div class="lbl">Cycling on footbridges</div><div class="val"><span data-count="2.1" data-dec="1">0</span>×<small>the time</small></div><div class="sub">yielding to pedestrians, often walking the bike</div></div>
+    </div>
+    <div class="notes">Road type matters even more than slope for bikes. On footways a bike runs at about 77 percent of road speed because you share them with pedestrians. On footbridges it's half, and on steps you push, which takes six and a half times as long. For walkers, roads, footways and bridges are all the same. Only steps slow you down.</div>
+  </section>
+
+  <!-- 8 · Speed map -->
+  <section class="slide" data-map="speed" data-title="07 · Speed map">
+    <div class="col" style="left:96px; top:104px; width:600px;">
+      <div class="eyebrow rv">07 · Speed map</div>
+      <h2 class="split">Where cycling is <em>fast</em>, and where it isn't</h2>
+      <div class="rv" style="--d:300; margin-top:34px;">
+        <div class="small" style="margin-bottom:8px;">Cycling, off-peak · seconds per 100 m (average of both directions)</div>
+        <div class="swatches" id="speed-sw"></div>
+        <div class="sw-lbl" id="speed-lbl"></div>
+      </div>
+      <ul class="facts rv" style="--d:500; margin-top:34px;">
+        <li data-n="01"><span><b>Roads:</b> about 21 km/h, my base pace (5.7 m/s).</span></li>
+        <li data-n="02"><span><b>Footways:</b> about 16 km/h, because they're shared with pedestrians.</span></li>
+        <li data-n="03"><span><b>Footbridges and steps</b> drop below 10 km/h. Real rides avoid them: two measured detours are now built into the planner.</span></li>
+      </ul>
+    </div>
+    <div class="notes">Putting slope and road type together gives a speed map for cycling. Dark segments are fast; bright segments are slow. The bright spots are steps and footbridges, scattered all over campus. My real rides take detours around them, and the planner now uses those detours.</div>
+  </section>
+
+  <!-- 9 · Race -->
+  <section class="slide" data-map="race" data-title="08 · Direction">
+    <div class="col" style="left:900px; top:104px; width:610px;">
+      <div class="eyebrow rv">08 · Direction</div>
+      <h2 class="split">Same road, <em>different</em> trip</h2>
+      <p class="lead rv" style="--d:250; font-size:19px; margin-top:14px;">Two cyclists leave at the same moment, one from each building. Replayed at about 50× speed.</p>
+      <div class="rv" style="--d:400; margin-top:16px;">
+        <div class="racer" id="r-down"><div><div class="nm"><span class="sw" style="color:var(--down);background:var(--down)"></span>Huiwen → Zhili<small>mostly downhill · climbs 5 m</small></div></div><div><div class="tm"><span>0.0</span><small>min</small></div><div class="dl"></div></div></div>
+        <div class="racer" id="r-up"><div><div class="nm"><span class="sw" style="color:var(--up);background:var(--up)"></span>Zhili → Huiwen<small>mostly uphill · climbs 30 m</small></div></div><div><div class="tm"><span>0.0</span><small>min</small></div><div class="dl"></div></div></div>
+      </div>
+      <div class="rv" style="--d:550; margin-top:18px;"><div class="small" style="margin-bottom:4px;">Elevation along the route (m) · distance from Zhili (km)</div><div id="ch-profile"></div></div>
+      <div class="rv" style="--d:650; margin-top:10px;"><button class="btn" id="race-replay">↻ Replay</button></div>
+    </div>
+    <div class="notes">Here's what direction means in practice. Two simulated cyclists leave at the same time, one from Huiwen and one from Zhili, on almost the same roads. Going down takes 5.7 minutes; coming back up takes 6.8. That's more than a minute, or 18 percent, just from the hill. The profile on the right shows the 25-metre climb.</div>
+  </section>
+
+  <!-- 10 · Asymmetry -->
+  <section class="slide" data-map="ambient5" data-title="09 · Asymmetry">
+    <div class="eyebrow rv">09 · Asymmetry</div>
+    <h2 class="split">On a bike, direction costs up to <em>a minute</em>. On foot, seconds.</h2>
+    <div class="col" style="left:96px; top:292px;"><div class="rv legend" style="--d:250; margin-bottom:6px;"><span><span class="dot-k" style="background:var(--down)"></span>A → B (first-named building first, usually the uphill one)</span><span><span class="dot-k" style="background:var(--up)"></span>B → A</span><span class="small">cycling, off-peak, all 15 teaching-building pairs</span></div><div class="rv" style="--d:300" id="ch-dumbbell"></div></div>
+    <div class="col tiles" style="left:1180px; top:330px; width:330px;">
+      <div class="tile rv" style="--d:700"><div class="lbl">Largest cycling gap</div><div class="val"><span data-count="19" data-dec="0">0</span><small>%</small></div><div class="sub">Sci-Tech ⇄ Zhili: 4.9 vs 5.9 min</div></div>
+      <div class="tile rv" style="--d:820"><div class="lbl">Largest walking gap</div><div class="val"><span data-count="1.8" data-dec="1">0</span><small>%</small></div><div class="sub">at walking speed the hill barely matters</div></div>
+    </div>
+    <div class="notes">Across all 15 pairs of teaching buildings, the pattern is clear. Every pair that crosses the hill has a gap of 13 to 19 percent by bike, nearly a minute. Pairs within the flat southern cluster have no gap. And on foot, the biggest difference anywhere is under 2 percent.</div>
+  </section>
+
+  <!-- 11 · Between classes -->
+  <section class="slide" data-map="ambient6" data-title="10 · Between classes">
+    <div class="eyebrow rv">10 · Between classes</div>
+    <h2 class="split">A 5-minute break only works <em>next door</em></h2>
+    <div class="col" style="left:96px; top:270px;"><div class="small rv" style="--d:250; margin-bottom:12px;">Walking time, off-peak, minutes · row = from, column = to · classified with +1 min to leave and enter buildings</div><div id="mx-teach"></div></div>
+    <div class="col" style="left:1000px; top:300px; width:500px;">
+      <div class="rv" style="--d:350;" id="mx-legend"></div>
+      <ul class="facts rv" style="--d:550; margin-top:30px;">
+        <li data-n="01"><span>Only <b>Zhili ⇄ Zhizhen</b> (3.4 min) and <b>Zhixin ⇄ CS&nbsp;&amp;&nbsp;SE</b> (4.5 min) fit a 5-minute break.</span></li>
+        <li data-n="02"><span><b>Huiwen → the south cluster</b> takes 19.5–24.7 min on foot: it doesn't even fit the 20-minute break.</span></li>
+        <li data-n="03"><span>By bike the same trips take <b>5.7–8.2 min</b>. Ride if you have to switch.</span></li>
+      </ul>
+    </div>
+    <div class="notes">Here is the walking time between every pair of teaching buildings. Dark blue fits a 5-minute break, and only two pairs are that close. Red means you won't make it even in the 20-minute break: anything from Huiwen down to the southern buildings. Hover over any cell to see the cycling time too.</div>
+  </section>
+
+  <!-- 12 · Dorm to class -->
+  <section class="slide" data-map="ambient7" data-title="11 · Dorm to class">
+    <div class="eyebrow rv">11 · Dorm to class</div>
+    <h2 class="split">Your dorm <em>decides</em> your morning</h2>
+    <div class="col" style="left:96px; top:270px;"><div class="small rv" style="--d:250; margin-bottom:12px;">Off-peak, minutes · large = walking · small = cycling</div><div id="mx-dorm"></div></div>
+    <div class="col" style="left:1000px; top:300px; width:500px;">
+      <div class="rv ramp" style="--d:350;"><span>3 min</span><span class="bar" id="dorm-ramp"></span><span>21 min</span></div>
+      <div class="small rv" style="--d:380; margin-top:6px;">walking time</div>
+      <ul class="facts rv" style="--d:550; margin-top:30px;">
+        <li data-n="01"><span><b>South Dorms → Zhizhen:</b> 3.4 min walk. <b>Qiao Dorms → Huiwen:</b> 19.7 min.</span></li>
+        <li data-n="02"><span><b>Zhai Dorms</b> is the most central: everything within 18 min on foot, 6 min by bike.</span></li>
+        <li data-n="03"><span>A bike keeps every dorm-to-class trip <b>under 7 minutes</b>.</span></li>
+      </ul>
+    </div>
+    <div class="notes">From the dorms it depends heavily on where you live. South Dorms are next to the southern buildings, three minutes away, but 20 minutes from Huiwen. Zhai Dorms in the middle are the most balanced. With a bike, no trip takes more than about seven minutes.</div>
+  </section>
+
+  <!-- 13 · Reach -->
+  <section class="slide" data-map="iso" data-title="12 · Reach">
+    <div class="col" style="left:930px; top:104px; width:580px;">
+      <div class="eyebrow rv">12 · Reach</div>
+      <h2 class="split">How far is <em>close</em>?</h2>
+      <p class="lead rv" style="--d:250; font-size:19px; margin-top:14px;">Every road you can reach in time, spreading over the directed network. Pick a starting point.</p>
+      <div class="rv btn-row" style="--d:350; margin-top:22px;" id="iso-origins"></div>
+      <div class="rv btn-row" style="--d:420; margin-top:10px;" id="iso-modes"></div>
+      <div class="rv" style="--d:500; margin-top:14px;" id="iso-rows"></div>
+      <p class="rv small" style="--d:600; margin-top:12px;">km = total length of road network reachable. Times as modelled for my pace; leaving a building is not included.</p>
+    </div>
+    <div class="notes">This is an isochrone map: how far you can get in a given time. From Zhai Dorms, 5 minutes on foot covers only about 6 kilometres of paths, while 15 minutes covers 50. Switch to the bike and 10 minutes covers almost the whole campus. You can click other dorms to compare.</div>
+  </section>
+
+  <!-- 14 · Peak -->
+  <section class="slide" data-map="ambient8" data-title="13 · Rush hour">
+    <div class="eyebrow rv">13 · Rush hour</div>
+    <h2 class="split">Class change slows cyclists <em>on shared paths</em></h2>
+    <div class="tiles" style="grid-template-columns:repeat(3, 1fr); margin-top:44px;">
+      <div class="tile rv" style="--d:250"><div class="lbl">Cycling on footways, steps & bridges at peak</div><div class="val">×<span data-count="1.26" data-dec="2">0</span><small>time</small></div><div class="sub">21 peak observations: dodging crowds</div></div>
+      <div class="tile rv" style="--d:350"><div class="lbl">Walking at peak</div><div class="val">×<span data-count="1.00" data-dec="2">0</span><small>time</small></div><div class="sub">43 peak observations: no measurable effect</div></div>
+      <div class="tile rv" style="--d:450"><div class="lbl">Roads at peak</div><div class="val" style="font-size:40px;line-height:1.3;">not modelled</div><div class="sub">When I'm late I ride faster, so "peak" and "my pace" can't be separated on roads</div></div>
+    </div>
+    <div class="rv" style="--d:600; margin-top:38px;"><div class="small" style="margin-bottom:6px;">Peak windows used by the model: 17 minutes around each class start and end</div><div id="ch-peak"></div></div>
+    <div class="notes">Rush hour. When classes change, cycling on shared paths takes about 26 percent longer. Walking doesn't change measurably. I deliberately did not model a peak effect on roads: when I'm late I simply ride faster, and the data can't tell that apart from traffic. An earlier version claimed roads were faster at peak, which was exactly this artefact.</div>
+  </section>
+
+  <!-- 15 · Validation -->
+  <section class="slide" data-map="ambient9" data-title="14 · Validation">
+    <div class="eyebrow rv">14 · Validation</div>
+    <h2 class="split">How good is it? <em>Honestly</em>: modest.</h2>
+    <div class="col" style="left:96px; top:300px;"><div class="small rv" style="--d:250; margin-bottom:10px;">Leave-one-track-out: refit without a track, then predict its travel time · bar = median absolute error · dots = individual tracks</div><div class="rv" style="--d:300" id="ch-val"></div></div>
+    <div class="col" style="left:1070px; top:330px; width:440px;">
+      <div class="tile rv" style="--d:600"><div class="lbl">Knowing the first 40% of a ride</div><div class="val"><span data-count="23.3" data-dec="1">0</span>→<span data-count="14.2" data-dec="1">0</span><small>%</small></div><div class="sub">cycling error drops by ~40%: most error is "how fast I felt that day"</div></div>
+      <div class="tile rv" style="--d:720; margin-top:18px;"><div class="lbl">Planned vs actual cycling route</div><div class="val"><span data-count="57">0</span><small>% overlap</small></div><div class="sub">median of 13 rides: real choices depend on things the map can't see</div></div>
+    </div>
+    <div class="notes">How accurate is it? I left each track out, refit the model, and predicted that trip. Walking: about 10 percent error. Cycling: 23 percent, only a little better than assuming a constant speed. But if you know how fast the first 40 percent of the ride went, the error drops to 14 percent, so most of the error is simply how fast I happened to be riding that day.</div>
+  </section>
+
+  <!-- 16 · Takeaways -->
+  <section class="slide" data-map="ambient10" data-title="15 · Takeaways">
+    <div class="eyebrow rv">15 · Takeaways</div>
+    <h2 class="split">What the tracks <em>taught me</em></h2>
+    <div class="col" style="left:96px; top:300px; width:820px;">
+      <div class="take rv" style="--d:300"><div class="n">1</div><div><h3>Direction is real, for bikes</h3><p>Crossing the hill costs a cyclist 13–19% extra (about a minute) going north. Walkers hardly notice.</p></div></div>
+      <div class="take rv" style="--d:420"><div class="n">2</div><div><h3>Steps and bridges dominate cycling</h3><p>A single flight of steps can outweigh a long detour. The best bike route is often not the shortest.</p></div></div>
+      <div class="take rv" style="--d:540"><div class="n">3</div><div><h3>The break, not the distance, is the constraint</h3><p>Huiwen to the south cluster doesn't fit a 20-minute break on foot. With a bike, every pair does.</p></div></div>
+    </div>
+    <div class="col rv" style="--d:700; left:1000px; top:316px; width:500px;">
+      <div class="tile"><div class="lbl" style="margin-bottom:10px;">Limitations</div>
+        <ul class="facts" style="gap:10px;">
+          <li data-n="·" style="font-size:16px;"><span>One person, 25 tracks, few peak-hour rides. Most roads fall back to their road-type average.</span></li>
+          <li data-n="·" style="font-size:16px;"><span>GPS can't separate paths only a few metres apart.</span></li>
+          <li data-n="·" style="font-size:16px;"><span>The slope effect is a correlation after adjusting for pace, not proof of cause.</span></li>
+          <li data-n="·" style="font-size:16px;"><span>Places are building-group centroids: real doors and bike parking add tens of seconds.</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes">Three takeaways. Direction is real, but mostly for bikes. For cyclists, steps and footbridges matter more than distance. And the real constraint is the break length: some walking trips simply don't fit. The limitations matter too: this is one person's data, so treat the numbers as estimates, not laws.</div>
+  </section>
+
+  <!-- 17 · Thanks -->
+  <section class="slide" data-map="finale" data-title="Thank you">
+    <div class="col" style="left:96px; top:250px; width:820px;">
+      <div class="eyebrow rv">Thank you</div>
+      <h1 class="split" style="font-size:120px;">Questions<em>?</em></h1>
+      <p class="lead rv" style="--d:500;">The live map recomputes itself whenever a new track is uploaded: plan routes in both directions, see reach maps, explore every road.</p>
+      <div class="rv" style="--d:700; margin-top:34px; font-size:22px; font-weight:600; letter-spacing:-.01em;">85.211.195.104/trackstudy</div>
+      <div class="rv small" style="--d:800; margin-top:8px;">Data: own GPS tracks · OpenStreetMap · DirMap shared terrain</div>
+    </div>
+    <div class="notes">Thank you. The full interactive map is online and updates automatically whenever I upload a new track. I'm happy to take questions.</div>
+  </section>
+</div>
+</div>
+<div id="notes"><div class="t">Speaker notes</div><div id="notes-body"></div></div>
+<div id="help"><div><kbd>→</kbd><kbd>Space</kbd> next &nbsp; <kbd>←</kbd> previous<br><kbd>Home</kbd><kbd>End</kbd> first / last<br><kbd>N</kbd> speaker notes &nbsp; <kbd>F</kbd> fullscreen<br><kbd>R</kbd> replay current animation &nbsp; <kbd>?</kbd> this help</div></div>
+
+<script src="data.js"></script>
+<script>
+'use strict';
+const D = window.DECK_DATA;
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C = { walk: '#3987e5', bike: '#d95926', dirmap: '#199e70', down: '#9085e9', up: '#d95926', ink: '#f4f1ea', ink2: '#c3c2b7', muted: '#898781',
+  grid: '#26272a', axis: '#3a3b3e', surface: '#111214', critical: '#d03b3b' };
+const EN = D.EN;
+const median = a => { const s = [...a].sort((x, y) => x - y), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+
+/* =================================================================== network */
+const NET = (() => {
+  const E = D.edges.map((r, id) => {
+    const [a, b, len, flat, cls, cw, cb, cp, effB, effW, sup] = r;
+    const xs = [], ys = [], cs = [0];
+    for (let i = 0; i < flat.length; i += 2) { xs.push(flat[i]); ys.push(flat[i + 1]); }
+    for (let i = 1; i < xs.length; i++) cs.push(cs[i - 1] + Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]));
+    return { id, a, b, len, xs, ys, cs, L: cs[cs.length - 1] || 0.01, cls, cost: { w: cw, b: cb, p: cp }, effB, effW, sup };
+  });
+  const nodeXY = new Float64Array(D.nodes * 2).fill(NaN);
+  E.forEach(e => { nodeXY[e.a * 2] = e.xs[0]; nodeXY[e.a * 2 + 1] = e.ys[0]; nodeXY[e.b * 2] = e.xs[e.xs.length - 1]; nodeXY[e.b * 2 + 1] = e.ys[e.ys.length - 1]; });
+  const out = {};
+  for (const m of ['w', 'b', 'p']) {
+    const o = Array.from({ length: D.nodes }, () => []);
+    E.forEach(e => {
+      if (e.cost[m][0] != null) o[e.a].push([e.b, e.cost[m][0], e.id, 0]);
+      if (e.cost[m][1] != null) o[e.b].push([e.a, e.cost[m][1], e.id, 1]);
+    });
+    out[m] = o;
+  }
+  return { E, nodeXY, out };
+})();
+const PLACES = Object.fromEntries(D.places.map(p => [p.zh, p]));
+
+function pointAt(e, s) {           // position along edge geometry (world m)
+  const cs = e.cs; s = clamp(s, 0, e.L);
+  let i = 1; while (i < cs.length - 1 && cs[i] < s) i++;
+  const t = (s - cs[i - 1]) / ((cs[i] - cs[i - 1]) || 1);
+  return [lerp(e.xs[i - 1], e.xs[i], t), lerp(e.ys[i - 1], e.ys[i], t)];
+}
+function subPath(path, e, s0, s1) { // append edge geometry between s0 and s1 (s0 < s1)
+  if (s1 - s0 < 0.2) return;
+  const p0 = pointAt(e, s0); path.moveTo(p0[0], p0[1]);
+  for (let i = 1; i < e.cs.length - 1; i++) if (e.cs[i] > s0 && e.cs[i] < s1) path.lineTo(e.xs[i], e.ys[i]);
+  const p1 = pointAt(e, s1); path.lineTo(p1[0], p1[1]);
+}
+class Heap {
+  constructor() { this.a = []; }
+  get size() { return this.a.length; }
+  push(k, v) { const a = this.a; a.push([k, v]); let i = a.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (a[p][0] <= a[i][0]) break; [a[p], a[i]] = [a[i], a[p]]; i = p; } }
+  pop() { const a = this.a, top = a[0], last = a.pop(); if (a.length) { a[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i;
+    if (l < a.length && a[l][0] < a[m][0]) m = l; if (r < a.length && a[r][0] < a[m][0]) m = r; if (m === i) break; [a[m], a[i]] = [a[i], a[m]]; i = m; } } return top; }
+}
+function dijkstra(mode, src) {
+  const n = D.nodes, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), pdir = new Int8Array(n), out = NET.out[mode];
+  dist[src] = 0; const h = new Heap(); h.push(0, src);
+  while (h.size) {
+    const [d, u] = h.pop(); if (d > dist[u]) continue;
+    for (const [v, c, eid, dir] of out[u]) { const nd = d + c; if (nd < dist[v]) { dist[v] = nd; prev[v] = eid; pdir[v] = dir; h.push(nd, v); } }
+  }
+  return { dist, prev, pdir };
+}
+function snapNode(mode, x, y) {
+  let best = -1, bd = Infinity; const out = NET.out[mode];
+  for (let i = 0; i < D.nodes; i++) {
+    if (!out[i].length) continue;
+    const d = Math.hypot(NET.nodeXY[i * 2] - x, NET.nodeXY[i * 2 + 1] - y);
+    if (d < bd) { bd = d; best = i; }
+  }
+  return best;
+}
+
+/* =================================================================== terrain */
+const TER = (() => {
+  const T = D.terrain; if (!T) return null;
+  const { nx, ny, x0, y0, step, h } = T;
+  const at = (i, j) => (i < 0 || j < 0 || i >= nx || j >= ny) ? null : h[j * nx + i];
+  const sample = (x, y) => {
+    const fx = (x - x0) / step, fy = (y - y0) / step, i = Math.floor(fx), j = Math.floor(fy), dx = fx - i, dy = fy - j;
+    const v = [at(i, j), at(i + 1, j), at(i, j + 1), at(i + 1, j + 1)], w = [(1 - dx) * (1 - dy), dx * (1 - dy), (1 - dx) * dy, dx * dy];
+    let s = 0, ws = 0; v.forEach((q, k) => { if (q != null) { s += q * w[k]; ws += w[k]; } });
+    return ws > .2 ? s / ws : null;
+  };
+  // hypsometric + hillshade image (one pixel per grid cell; row 0 = south, matching the flipped world transform)
+  const cv = document.createElement('canvas'); cv.width = nx; cv.height = ny;
+  const g = cv.getContext('2d'), img = g.createImageData(nx, ny);
+  const lo = 2, hi = 35, A = [17, 18, 20], B = [168, 227, 201];
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const v = at(i, j); if (v == null) continue;
+    const t = clamp((v - lo) / (hi - lo), 0, 1);
+    const gx = ((at(i + 1, j) ?? v) - (at(i - 1, j) ?? v)) / (2 * step), gy = ((at(i, j + 1) ?? v) - (at(i, j - 1) ?? v)) / (2 * step);
+    const shade = clamp(1 + (-gx * .7 + gy * .7) * 5, .55, 1.4);  // light from north-west
+    const k = (j * nx + i) * 4;
+    for (let c = 0; c < 3; c++) img.data[k + c] = clamp(lerp(A[c], B[c], Math.pow(t, .9)) * shade, 0, 255);
+    img.data[k + 3] = 255 * (.25 + .6 * t);
+  }
+  g.putImageData(img, 0, 0);
+  // marching-squares contours (2 m minor, 10 m major)
+  const minor = new Path2D(), major = new Path2D();
+  for (let lv = 4; lv <= 34; lv += 2) {
+    const P = lv % 10 === 0 ? major : minor;
+    for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+      const a = at(i, j), b = at(i + 1, j), c = at(i + 1, j + 1), d = at(i, j + 1);
+      if (a == null || b == null || c == null || d == null) continue;
+      const idx = (a > lv) | (b > lv) << 1 | (c > lv) << 2 | (d > lv) << 3;
+      if (idx === 0 || idx === 15) continue;
+      const X = x0 + i * step, Y = y0 + j * step, f = (p, q) => (lv - p) / (q - p);
+      const pt = { ab: [X + f(a, b) * step, Y], bc: [X + step, Y + f(b, c) * step], dc: [X + f(d, c) * step, Y + step], ad: [X, Y + f(a, d) * step] };
+      const segs = { 1: ['ad', 'ab'], 2: ['ab', 'bc'], 3: ['ad', 'bc'], 4: ['bc', 'dc'], 5: ['ad', 'dc', 'ab', 'bc'], 6: ['ab', 'dc'], 7: ['ad', 'dc'],
+        8: ['ad', 'dc'], 9: ['ab', 'dc'], 10: ['ab', 'ad', 'bc', 'dc'], 11: ['bc', 'dc'], 12: ['ad', 'bc'], 13: ['ab', 'bc'], 14: ['ad', 'ab'] }[idx];
+      for (let s = 0; s < segs.length; s += 2) { P.moveTo(...pt[segs[s]]); P.lineTo(...pt[segs[s + 1]]); }
+    }
+  }
+  return { img: cv, minor, major, sample, x0, y0, step, nx, ny };
+})();
+
+/* =================================================================== map renderer */
+const SPEED_BINS = [20, 25, 35, 60], SPEED_COLORS = ['#7a3416', '#b04b1d', '#e06a35', '#f59a6c', '#fdd0b5'];
+const ISO_COL = { walk: ['#9ec5f4', '#5598e7', '#256abf'], bike: ['#fbc4a6', '#ef8a5d', '#c4501f'] };
+const ISO_LIM = { walk: [5, 10, 15], bike: [3, 5, 10] };
+
+const MAP = (() => {
+  const cv = $('#map'), ctx = cv.getContext('2d');
+  let K = 1;
+  const paths = { net: new Path2D(), netMajor: new Path2D(), walk: new Path2D(), bike: new Path2D(), speed: SPEED_BINS.map(() => new Path2D()).concat([new Path2D()]) };
+  NET.E.forEach(e => {
+    const add = P => { P.moveTo(e.xs[0], e.ys[0]); for (let i = 1; i < e.xs.length; i++) P.lineTo(e.xs[i], e.ys[i]); };
+    add(e.cls === 'major' || e.cls === 'minor' ? paths.netMajor : paths.net);
+    if (e.sup[0]) add(paths.walk);
+    if (e.sup[1]) add(paths.bike);
+    const c = [e.cost.b[0], e.cost.b[1]].filter(v => v != null);
+    if (c.length) { const sp = c.reduce((s, v) => s + v, 0) / c.length / e.len * 100; let k = 0; while (k < SPEED_BINS.length && sp >= SPEED_BINS[k]) k++; e.s100 = sp; add(paths.speed[k]); }
+  });
+
+  // tweened state
+  const KEYS = ['cx', 'cy', 'ppm', 'sx', 'sy', 'tilt', 'spin', 'scale', 'terrain', 'contour', 'net', 'cover', 'speed', 'flow', 'race', 'iso', 'labels', 'm0', 'm1', 'vig', 'drift'];
+  const BASE = { cx: 60, cy: -20, ppm: .6, sx: 800, sy: 450, tilt: 0, spin: 0, scale: 1, terrain: 0, contour: 0, net: 0, cover: 0, speed: 0, flow: 0, race: 0, iso: 0, labels: 0,
+    m0: -3000, m1: -2000, vig: 0, drift: 0 };
+  let cur = { ...BASE }, from = { ...BASE }, to = { ...BASE }, t0 = 0, dur = 1;
+  let labelSet = new Set(), labelAlpha = Object.fromEntries(D.places.map(p => [p.zh, 0]));
+  let reveal = 1, revealT0 = 0;
+
+  function set(target, opts = {}) {
+    from = { ...cur }; to = { ...BASE, ...target }; t0 = performance.now(); dur = REDUCED ? 1 : (opts.dur || 1600);
+    labelSet = new Set(target.labelList || []);
+    if (opts.reveal) { reveal = 0; revealT0 = performance.now(); }
+  }
+  function resize(scale) {
+    K = Math.min(2.2, (window.devicePixelRatio || 1) * scale);
+    cv.width = Math.round(1600 * K); cv.height = Math.round(900 * K);
+  }
+  const W2S = (x, y) => [cur.sx + (x - cur.cx) * cur.ppm, cur.sy - (y - cur.cy) * cur.ppm];
+  function worldTransform() { ctx.setTransform(K * cur.ppm, 0, 0, -K * cur.ppm, K * (cur.sx - cur.cx * cur.ppm), K * (cur.sy + cur.cy * cur.ppm)); }
+
+  // ---- flowing particles (simulated walkers / cyclists at the modelled speed of each road & direction)
+  const parts = [];
+  const TL = 34;      // time-lapse factor
+  const mobile = { w: NET.E.filter(e => e.cost.w[0] != null || e.cost.w[1] != null), b: NET.E.filter(e => e.cost.b[0] != null || e.cost.b[1] != null) };
+  function spawn(p) {
+    const list = mobile[p.m]; const e = list[(Math.random() * list.length) | 0];
+    const dirs = [0, 1].filter(d => e.cost[p.m][d] != null); p.d = dirs[(Math.random() * dirs.length) | 0];
+    p.e = e; p.s = Math.random() * e.L; p.life = 6 + Math.random() * 14;
+  }
+  for (let i = 0; i < 520; i++) { const p = { m: i % 5 < 2 ? 'w' : 'b' }; spawn(p); parts.push(p); }
+  function stepParticles(dt) {
+    for (const p of parts) {
+      p.life -= dt; if (p.life < 0) { spawn(p); continue; }
+      const e = p.e, v = e.len / e.cost[p.m][p.d];
+      p.v = v; p.s += (p.d ? -1 : 1) * v * dt * TL;
+      if (p.s > e.L || p.s < 0) {
+        const node = p.d ? e.a : e.b, opts = NET.out[p.m][node].filter(o => o[2] !== e.id);
+        const nx = opts.length ? opts[(Math.random() * opts.length) | 0] : null;
+        if (!nx) { spawn(p); continue; }
+        p.e = NET.E[nx[2]]; p.d = nx[3]; p.s = p.d ? p.e.L : 0;
+      }
+    }
+  }
+  function drawParticles(alpha) {
+    if (alpha <= 0.01) return;
+    ctx.globalCompositeOperation = 'lighter';
+    for (const m of ['w', 'b']) {
+      const P = new Path2D();
+      for (const p of parts) {
+        if (p.m !== m) continue;
+        const a = pointAt(p.e, p.s), tr = clamp(p.v * TL * 0.09, 6, 60), b = pointAt(p.e, p.s - (p.d ? -1 : 1) * tr);
+        P.moveTo(b[0], b[1]); P.lineTo(a[0], a[1]);
+      }
+      ctx.strokeStyle = m === 'w' ? 'rgba(110,170,240,1)' : 'rgba(240,120,70,1)';
+      ctx.globalAlpha = alpha * .9; ctx.lineWidth = 2.6 / cur.ppm; ctx.lineCap = 'round'; ctx.stroke(P);
+    }
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  }
+
+  // ---- overlays driven by slides
+  const overlay = { race: null, iso: null };
+
+  function drawRace(alpha) {
+    const R = overlay.race; if (!R || alpha < .01) return;
+    const tNow = R.clock();
+    for (const r of R.routes) {
+      ctx.globalAlpha = alpha * .28; ctx.strokeStyle = r.color; ctx.lineWidth = 5 / cur.ppm; ctx.lineJoin = ctx.lineCap = 'round';
+      ctx.stroke(r.path);
+      const f = clamp(tNow / r.T, 0, 1), pos = r.at(f);
+      // trail
+      ctx.globalAlpha = alpha; ctx.lineWidth = 4 / cur.ppm; ctx.stroke(r.partial(f));
+      ctx.save(); ctx.setTransform(K, 0, 0, K, 0, 0);
+      const [X, Y] = W2S(pos[0], pos[1]);
+      const g = ctx.createRadialGradient(X, Y, 0, X, Y, 26); g.addColorStop(0, r.color + 'aa'); g.addColorStop(1, r.color + '00');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X, Y, 26, 0, 7); ctx.fill();
+      ctx.fillStyle = C.surface; ctx.beginPath(); ctx.arc(X, Y, 9, 0, 7); ctx.fill();
+      ctx.fillStyle = r.color; ctx.beginPath(); ctx.arc(X, Y, 7, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawIso(alpha) {
+    const I = overlay.iso; if (!I || alpha < .01) return;
+    const T = I.clock(), lim = ISO_LIM[I.mode], col = ISO_COL[I.mode], dist = I.dist, m = I.key;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (let b = 2; b >= 0; b--) {
+      const Tb = Math.min(T, lim[b] * 60); if (Tb <= 0) continue;
+      const P = new Path2D();
+      for (const e of NET.E) {
+        const ca = e.cost[m][0], cb = e.cost[m][1], da = dist[e.a], db = dist[e.b];
+        const fa = ca != null && isFinite(da) ? clamp((Tb - da) / ca, 0, 1) : 0;
+        const fb = cb != null && isFinite(db) ? clamp((Tb - db) / cb, 0, 1) : 0;
+        if (fa + fb >= 1) subPath(P, e, 0, e.L);
+        else { if (fa > 0) subPath(P, e, 0, fa * e.L); if (fb > 0) subPath(P, e, e.L - fb * e.L, e.L); }
+      }
+      ctx.globalAlpha = alpha; ctx.strokeStyle = col[b]; ctx.lineWidth = (b === 0 ? 3.2 : 2.6) / cur.ppm; ctx.stroke(P);
+    }
+    // wavefront glow at origin
+    ctx.save(); ctx.setTransform(K, 0, 0, K, 0, 0);
+    const [X, Y] = W2S(I.origin.p[0], I.origin.p[1]), pulse = (performance.now() / 1400) % 1;
+    ctx.globalAlpha = alpha * (1 - pulse); ctx.strokeStyle = col[0]; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, 8 + pulse * 40, 0, 7); ctx.stroke();
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+  function drawLabels() {
+    ctx.save(); ctx.setTransform(K, 0, 0, K, 0, 0);
+    ctx.font = '600 14px ' + getComputedStyle(document.body).fontFamily; ctx.textBaseline = 'middle';
+    const iso = overlay.iso && cur.iso > .01 ? overlay.iso : null, isoT = iso ? iso.clock() : 0;
+    for (const p of D.places) {
+      const tgt = labelSet.has(p.zh) || labelSet.has('*' + p.g) ? 1 : 0;
+      labelAlpha[p.zh] += (tgt - labelAlpha[p.zh]) * 0.08;
+      let a = labelAlpha[p.zh] * cur.labels; if (a < .02) continue;
+      const [X, Y] = W2S(p.p[0], p.p[1]);
+      let reached = 1;
+      if (iso) { const dn = iso.placeDist[p.zh]; reached = dn <= isoT ? 1 : .35; }
+      ctx.globalAlpha = a * reached;
+      const hollow = p.g === 'dorm';
+      ctx.fillStyle = C.surface; ctx.beginPath(); ctx.arc(X, Y, 7, 0, 7); ctx.fill();
+      if (hollow) { ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, 4.5, 0, 7); ctx.stroke(); }
+      else { ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(X, Y, 5, 0, 7); ctx.fill(); }
+      const txt = p.en, right = p.lab !== 'l';
+      ctx.textAlign = right ? 'left' : 'right';
+      const tx = X + (right ? 12 : -12);
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(13,14,16,.85)'; ctx.strokeText(txt, tx, Y);
+      ctx.fillStyle = C.ink; ctx.fillText(txt, tx, Y);
+      if (p.hTag && cur.terrain > .3) { ctx.font = '500 12px ' + getComputedStyle(document.body).fontFamily; ctx.fillStyle = C.ink2; ctx.strokeText(p.hTag, tx, Y + 16); ctx.fillText(p.hTag, tx, Y + 16); ctx.font = '600 14px ' + getComputedStyle(document.body).fontFamily; }
+    }
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    const t = clamp((now - t0) / dur, 0, 1), e = easeIO(t);
+    for (const k of KEYS) cur[k] = lerp(from[k], to[k], e);
+    const drift = cur.drift, tt = now / 1000;
+    const spin = cur.spin + drift * Math.sin(tt / 14) * 3, cx = cur.cx + drift * Math.sin(tt / 11) * 30, cy = cur.cy + drift * Math.cos(tt / 13) * 30;
+    const rv = reveal < 1 ? (reveal = clamp((now - revealT0) / 2600, 0, 1)) : 1;
+    cv.style.transform = `perspective(1500px) rotateX(${cur.tilt}deg) rotateZ(${spin}deg) scale(${cur.scale})`;
+    const save = cur.cx; cur.cx = cx; const saveY = cur.cy; cur.cy = cy;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    worldTransform();
+    if (TER && cur.terrain > .01) {
+      ctx.globalAlpha = cur.terrain; ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(TER.img, TER.x0 - TER.step / 2, TER.y0 - TER.step / 2, TER.nx * TER.step, TER.ny * TER.step);
+    }
+    if (TER && cur.contour > .01) {
+      ctx.globalAlpha = cur.contour * .5; ctx.strokeStyle = '#a8e3c9'; ctx.lineWidth = .8 / cur.ppm; ctx.stroke(TER.minor);
+      ctx.globalAlpha = cur.contour * .9; ctx.lineWidth = 1.4 / cur.ppm; ctx.stroke(TER.major);
+    }
+    if (cur.net > .01) {
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.globalAlpha = cur.net * .55; ctx.strokeStyle = '#5b5c61'; ctx.lineWidth = 1.1 / cur.ppm; ctx.stroke(paths.net);
+      ctx.globalAlpha = cur.net * .8; ctx.strokeStyle = '#6e6f74'; ctx.lineWidth = 1.8 / cur.ppm; ctx.stroke(paths.netMajor);
+    }
+    if (cur.speed > .01) {
+      paths.speed.forEach((P, k) => { ctx.globalAlpha = cur.speed; ctx.strokeStyle = SPEED_COLORS[k]; ctx.lineWidth = (k >= 3 ? 3.4 : 2.4) / cur.ppm; ctx.stroke(P); });
+    }
+    if (cur.cover > .01) {
+      ctx.globalAlpha = cur.cover; ctx.strokeStyle = C.bike; ctx.lineWidth = 5 / cur.ppm; ctx.stroke(paths.bike);
+      ctx.strokeStyle = C.walk; ctx.lineWidth = 2.6 / cur.ppm; ctx.stroke(paths.walk);
+    }
+    drawIso(cur.iso);
+    drawRace(cur.race);
+    stepParticles(dt); drawParticles(cur.flow);
+    ctx.globalAlpha = 1;
+    if (cur.labels > .01) drawLabels();
+
+    // masks: radial reveal (title), side fade, vignette
+    ctx.setTransform(K, 0, 0, K, 0, 0);
+    ctx.globalCompositeOperation = 'destination-in';
+    if (rv < 1) {
+      const [X, Y] = W2S(60, -20), R = 40 + easeOut(rv) * 1400;
+      const g = ctx.createRadialGradient(X, Y, Math.max(0, R - 260), X, Y, R); g.addColorStop(0, '#000'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 1600, 900);
+    }
+    if (Math.abs(cur.m1 - cur.m0) < 1500) {
+      const g = ctx.createLinearGradient(cur.m0, 0, cur.m1, 0); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 1600, 900);
+    }
+    if (cur.vig > .01) {
+      const g = ctx.createRadialGradient(800, 450, 120, 800, 450, 720);
+      g.addColorStop(0, '#000'); g.addColorStop(1, `rgba(0,0,0,${1 - cur.vig})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 1600, 900);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    cur.cx = save; cur.cy = saveY;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  return { set, resize, overlay, cur: () => cur };
+})();
+
+/* label placement & elevation tags */
+const LEFT_LABELS = new Set(['海山楼一带', '乔区', '文山湖餐厅', '图书馆北馆', '汇文楼', '计软楼']);
+D.places.forEach(p => { if (LEFT_LABELS.has(p.zh)) p.lab = 'l'; if (TER) { const h = TER.sample(...p.p); if (h != null) p.hTag = Math.round(h) + ' m'; } });
+
+/* map states per slide */
+const DORMS = ['斋区', '乔区', '南区', '海山楼一带'], TEACH = ['汇文楼', '科技楼', '致理楼', '致真楼', '致信楼', '计软楼'];
+const AMB = (spin, cx = 60, cy = -20) => ({ cx, cy, ppm: .62, sx: 800, sy: 470, tilt: 58, spin, scale: 1.5, net: .28, contour: .35, terrain: .1, flow: .35, labels: 0, vig: 1, drift: 1 });
+const MAP_STATES = {
+  title: { cx: 60, cy: -20, ppm: .6, sx: 1060, sy: 470, tilt: 52, spin: -24, scale: 1.32, net: .85, contour: .55, terrain: .28, flow: 1, vig: .95, drift: .6 },
+  ambient: AMB(-18, 120, 60), ambient2: AMB(-6, -60, 0), ambient3: AMB(8, 160, -120), ambient4: AMB(18, 40, 140), ambient5: AMB(28, -40, -80),
+  ambient6: AMB(36, 100, 60), ambient7: AMB(44, 0, -160), ambient8: AMB(52, 120, 100), ambient9: AMB(60, -80, 20), ambient10: AMB(68, 60, -60),
+  cover: { cx: 90, cy: -30, ppm: .6, sx: 1130, sy: 470, net: .7, cover: 1, contour: .12, labels: .9, m0: 640, m1: 780, labelList: [...DORMS, ...TEACH] },
+  hill: { cx: 90, cy: -30, ppm: .6, sx: 470, sy: 470, terrain: 1, contour: 1, net: .35, labels: 1, m0: 980, m1: 860, labelList: [...DORMS, ...TEACH, '图书馆北馆'] },
+  speed: { cx: 90, cy: -30, ppm: .6, sx: 1130, sy: 470, speed: 1, net: .25, contour: .12, labels: .9, m0: 690, m1: 800, labelList: [...DORMS, ...TEACH] },
+  race: { cx: 60, cy: 95, ppm: .76, sx: 450, sy: 470, terrain: .55, contour: .6, net: .45, race: 1, labels: 1, m0: 900, m1: 800, labelList: ['汇文楼', '致理楼', '科技楼', '斋区'] },
+  iso: { cx: 90, cy: -30, ppm: .6, sx: 470, sy: 470, net: .3, iso: 1, contour: .15, labels: 1, m0: 980, m1: 860, labelList: [...DORMS, ...TEACH, '图书馆南馆', '图书馆北馆', '荔山餐厅', '南校区餐厅'] },
+  finale: { cx: 60, cy: -20, ppm: .6, sx: 1080, sy: 470, tilt: 50, spin: 24, scale: 1.32, net: .85, contour: .55, terrain: .28, flow: 1, vig: .95, drift: .6 },
+};
+
+/* =================================================================== chart helpers */
+const NS = 'http://www.w3.org/2000/svg';
+function S(tag, attrs = {}, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function T(parent, x, y, text, cls, attrs = {}) { const t = S('text', { x, y, class: cls, ...attrs }, parent); t.textContent = text; return t; }
+const scale = (d0, d1, r0, r1) => v => r0 + (v - d0) / (d1 - d0) * (r1 - r0);
+const stage = $('#stage'), tip = $('#tip');
+let STAGE_SCALE = 1;
+function showTip(ev, title, rows) {
+  tip.replaceChildren();
+  const t = document.createElement('div'); t.className = 't'; t.textContent = title; tip.appendChild(t);
+  for (const [color, val, label] of rows) {
+    const r = document.createElement('div'); r.className = 'r';
+    const i = document.createElement('i'); i.style.background = color || 'transparent'; r.appendChild(i);
+    const b = document.createElement('b'); b.textContent = val; r.appendChild(b);
+    const s = document.createElement('span'); s.textContent = label; r.appendChild(s);
+    tip.appendChild(r);
+  }
+  const rc = stage.getBoundingClientRect(), x = (ev.clientX - rc.left) / STAGE_SCALE, y = (ev.clientY - rc.top) / STAGE_SCALE;
+  tip.classList.add('on');
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = clamp(x + 16, 10, 1590 - w) + 'px'; tip.style.top = clamp(y - h - 14, 10, 890 - h) + 'px';
+}
+const hideTip = () => tip.classList.remove('on');
+function hoverable(node, title, rows, mark) {
+  node.addEventListener('pointermove', ev => { showTip(ev, typeof title === 'function' ? title() : title, typeof rows === 'function' ? rows() : rows); if (mark) mark.classList.add('on'); });
+  node.addEventListener('pointerleave', () => { hideTip(); if (mark) mark.classList.remove('on'); });
+}
+function barPath(x, y, w, h, r = 4) {  // rounded data-end (right), square at the baseline
+  r = Math.min(r, w, h / 2);
+  return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+}
+function colPath(x, y, w, h, r = 4) {  // vertical bar rounded at top
+  r = Math.min(r, h, w / 2);
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+
+/* ---------- slide 2: break bars */
+function chartBreaks() {
+  const W = 1400, H = 150, svg = S('svg', { width: W, height: H }, $('#ch-breaks'));
+  const x = scale(0, 25, 160, W - 30), rows = [[5, 'Short break'], [10, 'Evening break'], [20, 'Long break']];
+  const ax = S('g', { class: 'ax' }, svg);
+  for (let m = 0; m <= 25; m += 5) { S('line', { x1: x(m), x2: x(m), y1: 8, y2: 118 }, ax); T(ax, x(m), 140, m + ' min', '', { 'text-anchor': 'middle' }); }
+  rows.forEach(([m, name], i) => {
+    const y = 16 + i * 34;
+    T(svg, 150, y + 14, name, 'lbl-2', { 'text-anchor': 'end' });
+    const p = S('path', { d: barPath(x(0), y, x(m) - x(0), 20), fill: '#3a3b3e', class: 'grow', style: `--d:${200 + i * 150}` }, svg);
+    T(svg, x(m) + 8, y + 14, m + ' min', 'lbl-m', { class: 'lbl-m fade', style: `--d:${700 + i * 150}` });
+  });
+  const marks = [[20.0 + 1, C.walk, 'Huiwen → Zhili on foot: 21 min'], [5.7 + 1, C.bike, 'by bike: 6.7 min']];
+  marks.forEach(([m, col, txt], i) => {
+    const g = S('g', { class: 'fade', style: `--d:${1200 + i * 300}` }, svg);
+    S('line', { x1: x(m), x2: x(m), y1: 4, y2: 118, stroke: col, 'stroke-width': 2 }, g);
+    S('circle', { cx: x(m), cy: 4, r: 5, fill: col, stroke: C.surface, 'stroke-width': 2 }, g);
+    T(g, x(m) + (i ? 10 : -10), 10, txt, 'lbl-ink', { 'text-anchor': i ? 'start' : 'end', dy: '0.1em' });
+  });
+  T(svg, x(21) - 10, 30, 'incl. 1 min to leave and enter buildings', 'lbl-m', { 'text-anchor': 'end', class: 'lbl-m fade', style: '--d:1300' });
+  return svg;
+}
+
+/* ---------- slide 4: pipeline */
+function buildPipe() {
+  const steps = [
+    ['Record', 'GPS tracks uploaded as KML. Walk / run / bike is <b>auto-detected</b> (18 of 20 right, 0 wrong).'],
+    ['Map-match', '<b>Hidden Markov model</b>: GPS noise σ 7 m plus heading vs road direction gives which road, which way.'],
+    ['Add slope', 'Terrain on a 10 m grid. Uphill and downhill are integrated <b>separately for each direction</b>.'],
+    ['Fit', '<b>Robust log-time regression</b>: personal pace + slope + road type + segment + rush hour.'],
+    ['Route', 'Directed graph, so <b>A→B ≠ B→A</b>. One-way rules and measured detours for bikes.'],
+    ['Validate', '<b>Leave one track out</b>, predict it, and compare planned vs actual routes.'],
+  ];
+  const host = $('#pipe'), svg = $('#pipe-svg'), gap = (1408 - 210) / 5;
+  const line = S('path', { d: `M28,28 H${28 + gap * 5}`, stroke: '#3a3b3e', 'stroke-width': 1.5, fill: 'none' }, svg);
+  const glow = S('path', { d: `M28,28 H${28 + gap * 5}`, stroke: 'url(#pg)', 'stroke-width': 2.5, fill: 'none', pathLength: 1, class: 'draw', style: '--d:500' }, svg);
+  const defs = S('defs', {}, svg), lg = S('linearGradient', { id: 'pg', x1: 0, x2: 1 }, defs);
+  S('stop', { offset: 0, 'stop-color': C.walk }, lg); S('stop', { offset: 1, 'stop-color': C.bike }, lg);
+  const pk = S('circle', { r: 5, cy: 28, cx: 28, fill: C.ink, style: 'filter:drop-shadow(0 0 8px #fff)' }, svg);
+  const els = steps.map(([h, p], i) => {
+    const d = document.createElement('div'); d.className = 'step rv'; d.style.left = (i * gap) + 'px'; d.style.setProperty('--d', 300 + i * 160);
+    const n = document.createElement('div'); n.className = 'num'; n.textContent = String(i + 1).padStart(2, '0'); d.appendChild(n);
+    const h3 = document.createElement('h3'); h3.textContent = h; d.appendChild(h3);
+    const pp = document.createElement('p'); pp.innerHTML = p; d.appendChild(pp);   // static author text only
+    host.appendChild(d); return d;
+  });
+  let raf = 0;
+  return {
+    svg,
+    start() {
+      cancelAnimationFrame(raf); const t0 = performance.now() + 600;
+      const loop = now => {
+        const t = ((now - t0) / 7000) % 1, f = now < t0 ? 0 : easeIO(clamp(t * 1.25, 0, 1));
+        pk.setAttribute('cx', 28 + f * gap * 5); pk.style.opacity = now < t0 ? 0 : (t > .85 ? 1 - (t - .85) / .15 : 1);
+        els.forEach((e, i) => e.classList.toggle('lit', now >= t0 && Math.abs(f * 5 - i) < .45));
+        raf = requestAnimationFrame(loop);
+      };
+      raf = requestAnimationFrame(loop);
+    },
+    stop() { cancelAnimationFrame(raf); },
+  };
+}
+
+/* ---------- slide 5: elevation bars */
+function hillBars() {
+  const rows = ['汇文楼', '科技楼', '斋区', '致信楼', '致理楼', '南区'].map(z => [EN[z], TER ? TER.sample(...PLACES[z].p) : 0]);
+  const W = 560, H = rows.length * 30 + 10, svg = S('svg', { width: W, height: H }, $('#hill-bars'));
+  const x = scale(0, 35, 130, W - 60);
+  rows.forEach(([n, h], i) => {
+    const y = i * 30 + 4;
+    T(svg, 120, y + 14, n, 'lbl-2', { 'text-anchor': 'end' });
+    S('path', { d: barPath(x(0), y + 3, x(h) - x(0), 16), fill: '#5cc39a', class: 'grow', style: `--d:${500 + i * 90}` }, svg);
+    T(svg, x(h) + 8, y + 15, Math.round(h) + ' m', 'lbl-ink', { class: 'lbl-ink fade', style: `--d:${900 + i * 90}` });
+  });
+  S('line', { x1: x(0), x2: x(0), y1: 0, y2: H, stroke: C.axis }, svg);
+  return svg;
+}
+
+/* ---------- slide 6: slope curves */
+function chartSlope() {
+  const host = $('#ch-slope'), wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.gap = '40px'; host.appendChild(wrap);
+  const svgs = [];
+  [['bike', 'Cycling'], ['walk', 'Walking']].forEach(([mode, title], pi) => {
+    const M = D.models[mode], W = 680, H = 470, m = { l: 62, r: 120, t: 40, b: 46 };
+    const svg = S('svg', { width: W, height: H }, wrap); svgs.push(svg);
+    const x = scale(-.08, .08, m.l, W - m.r), y = scale(.7, 1.5, H - m.b, m.t);
+    T(svg, m.l, 18, title, 'lbl-ink', { style: 'font-size:17px' });
+    const ax = S('g', { class: 'ax' }, svg);
+    [.8, 1, 1.2, 1.4].forEach(v => { S('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 1 ? 'base' : '' }, ax); T(ax, m.l - 10, y(v) + 4, '×' + v.toFixed(1), '', { 'text-anchor': 'end' }); });
+    [-.08, -.04, 0, .04, .08].forEach(v => T(ax, x(v), H - m.b + 24, (v > 0 ? '+' : '') + Math.round(v * 100) + '%', '', { 'text-anchor': 'middle' }));
+    T(svg, (m.l + W - m.r) / 2, H - 4, 'grade (downhill ← → uphill)', 'lbl-m', { 'text-anchor': 'middle' });
+    T(svg, m.l - 10, m.t - 16, 'travel time vs flat', 'lbl-m', { 'text-anchor': 'start', x: m.l });
+    const series = [
+      ['Prior', M.curve.map(p => [p.grade, p.prior]), C.muted, '2 5'],
+      ['DirMap', M.dirmap_curve.map(p => [p.grade, p.learned]), C.dirmap, null],
+      ['This study', M.curve.map(p => [p.grade, p.learned]), C[mode], null],
+    ];
+    series.forEach(([name, pts, col, dash], si) => {
+      const d = pts.map(([g, v], i) => (i ? 'L' : 'M') + x(g).toFixed(1) + ',' + y(v).toFixed(1)).join('');
+      S('path', { d, fill: 'none', stroke: col, 'stroke-width': si === 2 ? 2.5 : 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1,
+        class: dash ? 'fade' : 'draw', style: `--d:${300 + si * 350 + pi * 200}`, ...(dash ? { 'stroke-dasharray': dash } : {}) }, svg);
+      const [g, v] = pts[pts.length - 1];
+      T(svg, x(g) + 10, y(v) + 4 + (name === 'DirMap' && mode === 'walk' ? 12 : 0) + (name === 'This study' && mode === 'walk' ? -6 : 0), name, 'lbl-2', { class: 'lbl-2 fade', style: `--d:${1400 + pi * 200}` });
+    });
+    // annotations at ±5 %
+    const L = M.curve, at = g => L.reduce((b, p) => Math.abs(p.grade - g) < Math.abs(b.grade - g) ? p : b);
+    [.05, -.05].forEach((g, k) => {
+      const p = at(g), pct = Math.round((p.learned - 1) * 100);
+      if (mode === 'walk' && g < 0) return;
+      const ann = S('g', { class: 'pop', style: `--d:${1600 + k * 200 + pi * 200}` }, svg);
+      S('circle', { cx: x(g), cy: y(p.learned), r: 5, fill: C[mode], stroke: C.surface, 'stroke-width': 2 }, ann);
+      const up = g > 0, lab = `×${p.learned.toFixed(2)}`, sub = pct >= 0 ? `${pct}% slower` : `${-pct}% faster`;
+      T(ann, x(g), y(p.learned) + (up ? -34 : 30), lab, 'lbl-ink', { 'text-anchor': 'middle', style: 'font-size:16px' });
+      T(ann, x(g), y(p.learned) + (up ? -17 : 47), (g > 0 ? '+5%: ' : '−5%: ') + sub, 'lbl-m', { 'text-anchor': 'middle' });
+    });
+    // crosshair
+    const cross = S('line', { y1: m.t, y2: H - m.b, stroke: C.ink2, 'stroke-width': 1, opacity: 0 }, svg);
+    const hit = S('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: 'hit' }, svg);
+    hit.addEventListener('pointermove', ev => {
+      const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / STAGE_SCALE;
+      const g = clamp(Math.round(((px - m.l) / (W - m.l - m.r) * .16 - .08) / .005) * .005, -.08, .08);
+      const i = Math.round((g + .08) / .005);
+      cross.setAttribute('x1', x(g)); cross.setAttribute('x2', x(g)); cross.setAttribute('opacity', .5);
+      showTip(ev, `${title} · grade ${(g > 0 ? '+' : '') + (g * 100).toFixed(1)}%`, [
+        [C[mode], '×' + M.curve[i].learned.toFixed(2), 'this study'], [C.dirmap, '×' + M.dirmap_curve[i].learned.toFixed(2), 'DirMap'], [C.muted, '×' + M.curve[i].prior.toFixed(2), 'prior']]);
+    });
+    hit.addEventListener('pointerleave', () => { hideTip(); cross.setAttribute('opacity', 0); });
+  });
+  return svgs;
+}
+
+/* ---------- slide 7: road type bars */
+function chartRoads() {
+  const W = 900, rowH = 76, cats = [['footway', 'Footway'], ['service', 'Service road'], ['footbridge', 'Footbridge'], ['steps_down', 'Steps, down'], ['steps_up', 'Steps, up']];
+  const H = cats.length * rowH + 40, svg = S('svg', { width: W, height: H }, $('#ch-roads'));
+  const x = scale(0, 1.1, 150, W - 70), ax = S('g', { class: 'ax' }, svg);
+  [0, .25, .5, .75, 1].forEach(v => { S('line', { x1: x(v), x2: x(v), y1: 0, y2: H - 30, class: v === 0 ? 'base' : '' }, ax); T(ax, x(v), H - 8, v === 1 ? '1.0 road' : v.toFixed(2).replace(/0$/, ''), '', { 'text-anchor': 'middle' }); });
+  S('line', { x1: x(1), x2: x(1), y1: 0, y2: H - 30, stroke: C.ink2, 'stroke-width': 1, opacity: .6 }, svg);
+  cats.forEach(([k, name], i) => {
+    const y0 = 10 + i * rowH;
+    T(svg, 138, y0 + 25, name, 'lbl-2', { 'text-anchor': 'end', style: 'font-size:15px' });
+    [['walk', 'Walking'], ['bike', 'Cycling']].forEach(([mode, mn], j) => {
+      const v = D.models[mode].classes[k]; if (v == null) return;
+      const y = y0 + j * 22 + 4, g = S('g', { class: 'mark-hover' }, svg);
+      S('path', { d: barPath(x(0), y, x(v) - x(0), 18), fill: C[mode], class: 'grow', style: `--d:${300 + i * 120 + j * 60}` }, g);
+      T(svg, x(v) + 8, y + 14, '×' + v.toFixed(2), 'lbl-ink', { class: 'lbl-ink fade', style: `--d:${900 + i * 120}`, 'font-size': 13 });
+      const hit = S('rect', { x: x(0), y: y - 2, width: x(1.1) - x(0), height: 22, class: 'hit' }, svg);
+      hoverable(hit, `${mn} · ${name}`, [[C[mode], `×${v.toFixed(2)} speed`, `= ${(1 / v).toFixed(1)}× the time of a road`]], g);
+    });
+  });
+  return svg;
+}
+
+/* ---------- slide 8: speed legend */
+function speedLegend() {
+  const sw = $('#speed-sw'), lb = $('#speed-lbl');
+  SPEED_COLORS.forEach(c => { const i = document.createElement('i'); i.style.background = c; sw.appendChild(i); });
+  ['', '20 s', '25 s', '35 s', '60 s'].forEach(t => { const s = document.createElement('span'); s.textContent = t; lb.appendChild(s); });
+  const kmh = document.createElement('div'); kmh.className = 'sw-lbl'; kmh.style.marginTop = '2px';
+  ['', '18 km/h', '14', '10', '6'].forEach(t => { const s = document.createElement('span'); s.textContent = t; kmh.appendChild(s); });
+  lb.after(kmh);
+}
+
+/* ---------- slide 9: race */
+function routeBetween(mode, fromZh, toZh) {
+  const a = snapNode(mode, ...PLACES[fromZh].p), b = snapNode(mode, ...PLACES[toZh].p), R = dijkstra(mode, a);
+  const arcs = []; let u = b;
+  while (u !== a && R.prev[u] >= 0) { const e = NET.E[R.prev[u]], d = R.pdir[u]; arcs.push([e, d]); u = d ? e.b : e.a; }
+  arcs.reverse();
+  const xs = [], ys = [], tc = [0];
+  for (const [e, d] of arcs) {
+    const idx = [...e.xs.keys()]; if (d) idx.reverse();
+    const c = e.cost[mode][d];
+    idx.forEach((i, k) => {
+      if (xs.length && k === 0) return;
+      if (xs.length) { const dl = Math.abs(e.cs[i] - e.cs[idx[k - 1]]); tc.push(tc[tc.length - 1] + c * dl / e.L); }
+      xs.push(e.xs[i]); ys.push(e.ys[i]);
+    });
+  }
+  return { xs, ys, tc, total: tc[tc.length - 1] };
+}
+function offsetLine(xs, ys, off) {   // shift polyline to its right by `off` metres
+  const n = xs.length, ox = [], oy = [];
+  for (let i = 0; i < n; i++) {
+    const a = Math.max(0, i - 1), b = Math.min(n - 1, i + 1), dx = xs[b] - xs[a], dy = ys[b] - ys[a], L = Math.hypot(dx, dy) || 1;
+    ox.push(xs[i] + dy / L * off); oy.push(ys[i] - dx / L * off);
+  }
+  return [ox, oy];
+}
+function buildRace() {
+  const off = { down: 5.74, up: 6.79 };   // official model minutes (teaching_commute.csv, bike, off-peak)
+  const t = D.teach.find(r => r.a === '汇文楼' && r.b === '致理楼' && r.mode === 'bike' && r.per === 'off');
+  if (t) { off.down = t.ab; off.up = t.ba; }
+  const defs = [['down', '汇文楼', '致理楼', C.down, off.down], ['up', '致理楼', '汇文楼', C.up, off.up]];
+  const routes = defs.map(([key, a, b, color, mins]) => {
+    const r = routeBetween('b', a, b), [xs, ys] = offsetLine(r.xs, r.ys, 6), T = mins * 60;
+    const path = new Path2D(); xs.forEach((x, i) => i ? path.lineTo(x, ys[i]) : path.moveTo(x, ys[i]));
+    const tf = r.tc.map(c => c / r.total);
+    const locate = f => { let i = 1; while (i < tf.length - 1 && tf[i] < f) i++; const u = (f - tf[i - 1]) / ((tf[i] - tf[i - 1]) || 1); return [i, clamp(u, 0, 1)]; };
+    return {
+      key, color, T, mins, raw: r,
+      path,
+      at: f => { const [i, u] = locate(f); return [lerp(xs[i - 1], xs[i], u), lerp(ys[i - 1], ys[i], u)]; },
+      partial: f => { const P = new Path2D(), [i, u] = locate(f); P.moveTo(xs[0], ys[0]); for (let k = 1; k < i; k++) P.lineTo(xs[k], ys[k]); P.lineTo(lerp(xs[i - 1], xs[i], u), lerp(ys[i - 1], ys[i], u)); return P; },
+    };
+  });
+  const SPEEDUP = 50;    // model seconds per real second
+  let start = performance.now() + 1e9;
+  const race = { routes, clock: () => Math.max(0, (performance.now() - start) / 1000 * SPEEDUP) };
+  MAP.overlay.race = race;
+
+  // elevation profile (distance from Zhili)
+  const prof = routes.map(r => {
+    const { xs, ys } = r.raw, d = [0]; for (let i = 1; i < xs.length; i++) d.push(d[i - 1] + Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]));
+    const pts = []; const L = d[d.length - 1];
+    for (let s = 0; s <= L; s += 10) { let i = 1; while (i < d.length - 1 && d[i] < s) i++; const u = (s - d[i - 1]) / ((d[i] - d[i - 1]) || 1);
+      const h = TER ? TER.sample(lerp(xs[i - 1], xs[i], u), lerp(ys[i - 1], ys[i], u)) : null; pts.push([s, h]); }
+    // fill gaps (bridges / no terrain) by interpolation
+    for (let i = 0; i < pts.length; i++) if (pts[i][1] == null) { let a = i - 1, b = i + 1; while (b < pts.length && pts[b][1] == null) b++;
+      const ha = a >= 0 ? pts[a][1] : null, hb = b < pts.length ? pts[b][1] : null; pts[i][1] = ha == null ? hb : hb == null ? ha : lerp(ha, hb, (i - a) / (b - a)); }
+    return { L, pts };
+  });
+  const W = 610, H = 190, m = { l: 40, r: 14, t: 12, b: 28 }, svg = S('svg', { width: W, height: H }, $('#ch-profile'));
+  const Lmax = Math.max(prof[0].L, prof[1].L), x = scale(0, Lmax, m.l, W - m.r), y = scale(0, 40, H - m.b, m.t);
+  const ax = S('g', { class: 'ax' }, svg);
+  [0, 10, 20, 30, 40].forEach(v => { S('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? 'base' : '' }, ax); T(ax, m.l - 8, y(v) + 4, v, '', { 'text-anchor': 'end' }); });
+  for (let k = 0; k <= Lmax / 1000; k += .2) T(ax, x(k * 1000), H - 8, k.toFixed(1), '', { 'text-anchor': 'middle' });
+  // up route goes Zhili→Huiwen: distance from Zhili = s. down route: distance from Zhili = L - s.
+  const up = prof[1], dn = prof[0];
+  const dUp = up.pts.map(([s, h], i) => (i ? 'L' : 'M') + x(s).toFixed(1) + ',' + y(h).toFixed(1)).join('');
+  S('path', { d: dUp + `L${x(up.L)},${y(0)}L${x(0)},${y(0)}Z`, fill: 'rgba(168,227,201,.08)' }, svg);
+  S('path', { d: dUp, fill: 'none', stroke: C.ink2, 'stroke-width': 2, 'stroke-linejoin': 'round' }, svg);
+  T(svg, x(0) + 6, y(up.pts[0][1]) - 10, 'Zhili', 'lbl-m');
+  T(svg, x(up.L) - 6, y(up.pts[up.pts.length - 1][1]) - 10, 'Huiwen', 'lbl-m', { 'text-anchor': 'end' });
+  const mk = routes.map(r => S('circle', { r: 6, fill: r.color, stroke: C.surface, 'stroke-width': 2 }, svg));
+  const hAt = (P, s) => { const i = clamp(Math.round(s / 10), 0, P.pts.length - 1); return P.pts[i][1]; };
+
+  const els = { down: $('#r-down'), up: $('#r-up') };
+  let raf = 0;
+  function tick() {
+    const tm = race.clock();
+    routes.forEach((r, k) => {
+      const f = clamp(tm / r.T, 0, 1), el = els[r.key];
+      el.querySelector('.tm span').textContent = (Math.min(tm, r.T) / 60).toFixed(1);
+      el.classList.toggle('done', f >= 1);
+      const P = prof[k], s = f * P.L, sZ = r.key === 'up' ? s : P.L - s;
+      mk[k].setAttribute('cx', x(sZ)); mk[k].setAttribute('cy', y(hAt(P, s)));
+    });
+    raf = requestAnimationFrame(tick);
+  }
+  const diff = off.up - off.down;
+  els.up.querySelector('.dl').textContent = `+${diff.toFixed(1)} min · ${Math.round(diff / off.down * 100)}% longer`;
+  els.down.querySelector('.dl').textContent = 'first to arrive';
+  return {
+    start(delay = 1500) { start = performance.now() + delay; cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); },
+    stop() { cancelAnimationFrame(raf); },
+  };
+}
+
+/* ---------- slide 10: dumbbell */
+function chartDumbbell() {
+  const rows = D.teach.filter(r => r.mode === 'bike' && r.per === 'off').map(r => {
+    const w = D.teach.find(q => q.mode === 'walk' && q.per === 'off' && q.a === r.a && q.b === r.b);
+    return { ...r, gap: r.ba - r.ab, walkGap: w ? Math.abs(w.ba - w.ab) / Math.min(w.ab, w.ba) * 100 : null, w };
+  }).sort((a, b) => b.gap - a.gap);
+  const W = 1040, rh = 31, m = { l: 200, r: 210, t: 30, b: 34 }, H = m.t + rows.length * rh + m.b;
+  const svg = S('svg', { width: W, height: H }, $('#ch-dumbbell'));
+  const x = scale(0, 9, m.l, W - m.r), ax = S('g', { class: 'ax' }, svg);
+  for (let v = 0; v <= 9; v++) { S('line', { x1: x(v), x2: x(v), y1: m.t - 8, y2: H - m.b, class: v === 0 ? 'base' : '' }, ax); T(ax, x(v), H - 10, v + (v === 9 ? ' min' : ''), '', { 'text-anchor': 'middle' }); }
+  T(svg, W - m.r + 24, m.t - 12, 'cycling gap', 'lbl-m'); T(svg, W - 10, m.t - 12, 'walking gap', 'lbl-m', { 'text-anchor': 'end' });
+  rows.forEach((r, i) => {
+    const y = m.t + i * rh + rh / 2, d = 250 + i * 70, g = S('g', { class: 'mark-hover' }, svg);
+    T(svg, m.l - 16, y + 5, `${EN[r.a]} ⇄ ${EN[r.b]}`, 'lbl-2', { 'text-anchor': 'end' });
+    S('line', { x1: x(Math.min(r.ab, r.ba)), x2: x(Math.max(r.ab, r.ba)), y1: y, y2: y, stroke: '#5b5c61', 'stroke-width': 2, class: 'fade', style: `--d:${d + 200}` }, g);
+    S('circle', { cx: x(r.ab), cy: y, r: 6, fill: C.down, stroke: C.surface, 'stroke-width': 2, class: 'pop', style: `--d:${d}` }, g);
+    S('circle', { cx: x(r.ba), cy: y, r: 6, fill: C.up, stroke: C.surface, 'stroke-width': 2, class: 'pop', style: `--d:${d + 120}` }, g);
+    const pct = r.gap / Math.min(r.ab, r.ba) * 100;
+    T(svg, W - m.r + 24, y + 5, Math.abs(r.gap) < .05 ? '—' : `${r.gap > 0 ? '+' : '−'}${Math.abs(r.gap).toFixed(1)} min · ${Math.abs(pct).toFixed(0)}%`, Math.abs(pct) > 10 ? 'lbl-ink' : 'lbl-2', { class: (Math.abs(pct) > 10 ? 'lbl-ink' : 'lbl-2') + ' fade', style: `--d:${d + 300}` });
+    T(svg, W - 10, y + 5, r.walkGap == null ? '' : r.walkGap.toFixed(1) + '%', 'lbl-m', { 'text-anchor': 'end', class: 'lbl-m fade', style: `--d:${d + 350}` });
+    const hit = S('rect', { x: 0, y: y - rh / 2, width: W, height: rh, class: 'hit' }, svg);
+    hoverable(hit, `${EN[r.a]} ⇄ ${EN[r.b]} · cycling`, [[C.down, r.ab.toFixed(2) + ' min', `${EN[r.a]} → ${EN[r.b]} · climbs ${r.up_ab.toFixed(0)} m`],
+      [C.up, r.ba.toFixed(2) + ' min', `${EN[r.b]} → ${EN[r.a]} · climbs ${r.up_ba.toFixed(0)} m`],
+      ...(r.w ? [[C.walk, `${r.w.ab.toFixed(1)} / ${r.w.ba.toFixed(1)} min`, 'on foot, each way']] : [])], g);
+  });
+  return svg;
+}
+
+/* ---------- slide 11: teaching matrix */
+const BREAK_CATS = [[5, '#9ec5f4', '#0d1b2c', 'Fits a 5-min break'], [10, '#5598e7', '#0b1420', 'Fits a 10-min break'], [20, '#256abf', '#f4f1ea', 'Fits a 20-min break'], [Infinity, '#d03b3b', '#fff', '✕ Won’t make it']];
+function matrixTeach() {
+  const host = $('#mx-teach'), names = TEACH, mx = document.createElement('div'); mx.className = 'mx';
+  mx.style.gridTemplateColumns = `110px repeat(${names.length}, 112px)`; mx.style.gridAutoRows = '62px';
+  const get = (a, b, mode) => { const r = D.teach.find(q => q.mode === mode && q.per === 'off' && ((q.a === a && q.b === b) || (q.a === b && q.b === a))); if (!r) return null; return r.a === a ? r.ab : r.ba; };
+  const add = (cls, text) => { const d = document.createElement('div'); d.className = cls; d.textContent = text; mx.appendChild(d); return d; };
+  add('h', ''); names.forEach(n => add('h col-h', EN[n]));
+  names.forEach((a, i) => {
+    add('h', EN[a]);
+    names.forEach((b, j) => {
+      if (a === b) { add('c diag', '—'); return; }
+      const t = get(a, b, 'walk'), tb = get(a, b, 'bike'), cat = BREAK_CATS.find(c => t + 1 <= c[0]);
+      const c = document.createElement('div'); c.className = 'c'; c.style.background = cat[1]; c.style.color = cat[2]; c.style.setProperty('--cd', (i + j) * 55);
+      const bb = document.createElement('b'); bb.textContent = t.toFixed(1); c.appendChild(bb);
+      const sp = document.createElement('span'); sp.textContent = cat[0] === Infinity ? '✕ too far' : `≤ ${cat[0]} min`; c.appendChild(sp);
+      hoverable(c, `${EN[a]} → ${EN[b]}`, [[C.walk, t.toFixed(1) + ' min', 'walking (+1 min in/out → ' + (t + 1).toFixed(1) + ')'], [C.bike, tb.toFixed(1) + ' min', 'cycling']]);
+      mx.appendChild(c);
+    });
+  });
+  host.appendChild(mx);
+  const lg = $('#mx-legend'); lg.className = 'rv legend'; lg.style.flexDirection = 'column'; lg.style.alignItems = 'flex-start'; lg.style.gap = '10px';
+  BREAK_CATS.forEach(([, bg, , name]) => { const s = document.createElement('span'); const k = document.createElement('span'); k.className = 'dot-k'; k.style.background = bg; k.style.borderRadius = '3px'; k.style.width = '18px'; k.style.height = '12px'; s.appendChild(k); s.appendChild(document.createTextNode(name)); lg.appendChild(s); });
+}
+
+/* ---------- slide 12: dorm matrix */
+function matrixDorm() {
+  const host = $('#mx-dorm'), mx = document.createElement('div'); mx.className = 'mx';
+  mx.style.gridTemplateColumns = `130px repeat(${TEACH.length}, 112px)`; mx.style.gridAutoRows = '84px';
+  const add = (cls, text) => { const d = document.createElement('div'); d.className = cls; d.textContent = text; mx.appendChild(d); return d; };
+  const get = (o, d, mode) => D.dorm.find(r => r.o === o && r.d === d && r.mode === mode && r.per === 'off');
+  add('h', ''); TEACH.forEach(n => add('h col-h', EN[n]));
+  const lo = 3, hi = 21, ramp = t => { const f = clamp((t - lo) / (hi - lo), 0, 1); return `rgba(57,135,229,${(0.1 + 0.8 * f).toFixed(3)})`; };
+  DORMS.forEach((o, i) => {
+    add('h', EN[o]);
+    TEACH.forEach((d, j) => {
+      const w = get(o, d, 'walk'), b = get(o, d, 'bike'), c = document.createElement('div');
+      c.className = 'c'; c.style.background = ramp(w.t); c.style.color = C.ink; c.style.setProperty('--cd', (i * 6 + j) * 30);
+      const bb = document.createElement('b'); bb.textContent = w.t.toFixed(1); c.appendChild(bb);
+      const sp = document.createElement('span'); sp.textContent = 'bike ' + b.t.toFixed(1); c.appendChild(sp);
+      hoverable(c, `${EN[o]} → ${EN[d]}`, [[C.walk, w.t.toFixed(1) + ' min', `walking · ${w.m} m · climbs ${Math.round(w.up)} m`], [C.bike, b.t.toFixed(1) + ' min', `cycling · ${b.m} m`]]);
+      mx.appendChild(c);
+    });
+  });
+  host.appendChild(mx);
+  $('#dorm-ramp').style.background = `linear-gradient(90deg, ${ramp(3)}, ${ramp(21)})`;
+}
+
+/* ---------- slide 13: isochrones */
+function buildIso() {
+  const origins = ['斋区', '乔区', '南区', '海山楼一带', '汇文楼', '致理楼'];
+  let origin = '斋区', mode = 'walk', t0 = performance.now() + 1e9;
+  const cache = {};
+  function compute() {
+    const key = mode === 'walk' ? 'w' : 'b', ck = origin + key;
+    if (!cache[ck]) {
+      const src = snapNode(key, ...PLACES[origin].p), R = dijkstra(key, src), placeDist = {};
+      D.places.forEach(p => { placeDist[p.zh] = R.dist[snapNode(key, ...p.p)]; });
+      cache[ck] = { dist: R.dist, placeDist };
+    }
+    const lim = ISO_LIM[mode], DUR = 4200;
+    MAP.overlay.iso = { ...cache[ck], key, mode, origin: PLACES[origin], clock: () => clamp((performance.now() - t0) / DUR, 0, 1) ** 1.15 * lim[2] * 60 };
+  }
+  function rowsUI() {
+    const host = $('#iso-rows'); host.replaceChildren();
+    const r = D.iso.find(q => q.p === origin && q.mode === mode && q.dir === '出发'), lim = ISO_LIM[mode];
+    const kmIdx = mode === 'walk' ? [1, 2, 3] : [0, 1, 3];
+    lim.forEach((L, i) => {
+      const row = document.createElement('div'); row.className = 'iso-row';
+      const k = document.createElement('i'); k.style.background = ISO_COL[mode][i]; row.appendChild(k);
+      const t = document.createElement('div'); t.className = 't'; t.textContent = `within ${L} min ${mode === 'walk' ? 'on foot' : 'by bike'}`; row.appendChild(t);
+      const b = document.createElement('b'); const km = r ? r.km[kmIdx[i]] : null;
+      b.textContent = km == null ? '—' : km.toFixed(1); const sm = document.createElement('small'); sm.textContent = 'km'; b.appendChild(sm); row.appendChild(b);
+      host.appendChild(row);
+    });
+  }
+  function btns() {
+    const ho = $('#iso-origins'), hm = $('#iso-modes'); ho.replaceChildren(); hm.replaceChildren();
+    origins.forEach(z => { const b = document.createElement('button'); b.className = 'btn' + (z === origin ? ' on' : ''); b.textContent = EN[z]; b.onclick = () => { origin = z; refresh(); b.blur(); }; ho.appendChild(b); });
+    [['walk', 'Walking'], ['bike', 'Cycling']].forEach(([m, n]) => { const b = document.createElement('button'); b.className = 'btn' + (m === mode ? ' on' : ''); b.textContent = n; b.onclick = () => { mode = m; refresh(); b.blur(); }; hm.appendChild(b); });
+  }
+  function refresh(delay = 200) { t0 = performance.now() + delay; compute(); btns(); rowsUI(); }
+  btns(); rowsUI(); compute();
+  return { start() { refresh(1300); }, replay() { refresh(100); } };
+}
+
+/* ---------- slide 14: peak timeline */
+function chartPeak() {
+  const W = 1408, H = 96, svg = S('svg', { width: W, height: H }, $('#ch-peak'));
+  const x = scale(7 * 60, 22.5 * 60, 20, W - 20), ax = S('g', { class: 'ax' }, svg);
+  S('line', { x1: x(420), x2: x(1350), y1: 46, y2: 46, class: 'base' }, ax);
+  for (let h = 7; h <= 22; h++) { S('line', { x1: x(h * 60), x2: x(h * 60), y1: 42, y2: 50 }, ax); T(ax, x(h * 60), 76, `${h}:00`, '', { 'text-anchor': 'middle' }); }
+  const win = [...D.meta.peak].sort((a, b) => a[0] - b[0]);
+  win.forEach(([a, b], i) => {
+    S('rect', { x: x(a), y: 26, width: Math.max(3, x(b) - x(a)), height: 20, rx: 3, fill: C.bike, opacity: .85, class: 'growy', style: `--d:${300 + i * 40}` }, svg);
+    const hit = S('rect', { x: x(a) - 4, y: 16, width: Math.max(3, x(b) - x(a)) + 8, height: 40, class: 'hit' }, svg);
+    const f = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+    hoverable(hit, 'Peak window', [[C.bike, `${f(a)}–${f(b)}`, 'class change']]);
+  });
+  return svg;
+}
+
+/* ---------- slide 15: validation */
+function chartVal() {
+  const V = D.validation, err = (mode, k) => V.filter(v => v.mode === mode).map(v => Math.abs(v[k]) * 100);
+  const rows = [['walk', 'const', 'Walking · constant speed'], ['walk', 'full', 'Walking · full model'], null,
+    ['bike', 'const', 'Cycling · constant speed'], ['bike', 'full', 'Cycling · full model'], ['bike', 'cal', 'Cycling · full + first 40%']];
+  const W = 900, rh = 58, m = { l: 230, r: 40, t: 10, b: 36 }, H = m.t + rows.length * rh + m.b - 26;
+  const svg = S('svg', { width: W, height: H }, $('#ch-val'));
+  const x = scale(0, 50, m.l, W - m.r), ax = S('g', { class: 'ax' }, svg);
+  [0, 10, 20, 30, 40, 50].forEach(v => { S('line', { x1: x(v), x2: x(v), y1: 0, y2: H - m.b, class: v === 0 ? 'base' : '' }, ax); T(ax, x(v), H - 12, v + '%', '', { 'text-anchor': 'middle' }); });
+  let y = m.t;
+  rows.forEach((r, i) => {
+    if (!r) { y += rh - 26; return; }
+    const [mode, k, name] = r, e = err(mode, k), md = median(e), g = S('g', { class: 'mark-hover' }, svg);
+    T(svg, m.l - 14, y + 20, name, 'lbl-2', { 'text-anchor': 'end' });
+    S('path', { d: barPath(x(0), y + 8, x(md) - x(0), 22), fill: C[mode], opacity: k === 'cal' ? 1 : .85, class: 'grow', style: `--d:${300 + i * 140}` }, g);
+    T(svg, x(md) + 8, y + 2, md.toFixed(1) + '%', 'lbl-ink', { class: 'lbl-ink fade', style: `--d:${900 + i * 140}` });
+    e.forEach((v, j) => S('circle', { cx: x(Math.min(v, 49.5)), cy: y + 19 + ((j % 3) - 1) * 5, r: 3.2, fill: C.ink, opacity: .55, class: 'pop', style: `--d:${1000 + i * 140 + j * 25}` }, svg));
+    const hit = S('rect', { x: 0, y: y + 2, width: W, height: 34, class: 'hit' }, svg);
+    hoverable(hit, name, [[C[mode], md.toFixed(1) + '%', `median absolute error (${e.length} tracks)`], [null, Math.max(...e).toFixed(0) + '%', 'worst track']], g);
+    y += rh;
+  });
+  return svg;
+}
+
+/* =================================================================== deck engine */
+const slides = $$('.slide');
+const N = slides.length;
+let cur = -1;
+$('#counter').innerHTML = `<b>01</b> / ${String(N).padStart(2, '0')}`;
+
+// kinetic word split (author text only)
+$$('.split').forEach(el => {
+  let wi = 0;
+  const walk = node => {
+    [...node.childNodes].forEach(ch => {
+      if (ch.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        ch.textContent.split(/(\s+)/).forEach(part => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+          const w = document.createElement('span'); w.className = 'w';
+          const s = document.createElement('span'); s.textContent = part; s.style.setProperty('--wd', 70 * wi++); w.appendChild(s); frag.appendChild(w);
+        });
+        ch.replaceWith(frag);
+      } else if (ch.nodeType === 1) walk(ch);
+    });
+  };
+  walk(el);
+  // gradient <em> spans: make each word carry the gradient itself
+  $$('em .w > span', el).forEach(s => { s.style.background = 'linear-gradient(100deg, #8fbaf0 0%, #f2a27a 100%)'; s.style.webkitBackgroundClip = 'text'; s.style.backgroundClip = 'text'; s.style.color = 'transparent'; });
+});
+
+// count-up
+function countUp(root) {
+  $$('[data-count]', root).forEach(el => {
+    const to = +el.dataset.count, dec = +(el.dataset.dec || 0), t0 = performance.now() + 700, dur = 1400;
+    const step = now => { const t = clamp((now - t0) / dur, 0, 1); el.textContent = (to * easeOut(t)).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }); if (t < 1) requestAnimationFrame(step); };
+    el.textContent = (0).toFixed(dec); requestAnimationFrame(step);
+  });
+}
+function replayCharts(root) {
+  $$('svg', root).forEach(s => { s.classList.remove('play'); });
+  void root.offsetWidth;
+  requestAnimationFrame(() => $$('svg', root).forEach(s => { s.classList.add('play'); }));
+}
+
+// build charts
+chartBreaks(); const PIPE = buildPipe(); hillBars(); chartSlope(); chartRoads(); speedLegend();
+const RACE = buildRace(); chartDumbbell(); matrixTeach(); matrixDorm(); const ISO = buildIso(); chartPeak(); chartVal();
+$('#elev-ramp').style.background = 'linear-gradient(90deg, #1b2f29, #2a6e57, #5cc39a, #a8e3c9)';
+$('#race-replay').onclick = e => { RACE.start(200); e.currentTarget.blur(); };
+
+const HOOKS = {
+  4: { enter: () => PIPE.start(), leave: () => PIPE.stop() },
+  9: { enter: () => RACE.start(), leave: () => RACE.stop(), replay: () => RACE.start(200) },
+  13: { enter: () => ISO.start(), replay: () => ISO.replay() },
+};
+
+function go(n) {
+  n = clamp(n, 0, N - 1); if (n === cur) return;
+  const dir = n > cur ? 1 : -1, old = slides[cur], nw = slides[n];
+  if (old) {
+    old.style.setProperty('--dir', dir); old.classList.remove('active'); old.classList.add('leaving');
+    setTimeout(() => old.classList.remove('leaving'), 650);
+    HOOKS[cur + 1]?.leave?.();
+  }
+  hideTip();
+  nw.style.setProperty('--dir', dir);
+  nw.classList.remove('active'); void nw.offsetWidth; nw.classList.add('active');
+  const first = cur < 0; cur = n;
+  const st = MAP_STATES[nw.dataset.map] || MAP_STATES.ambient;
+  MAP.set(st, { dur: first ? 10 : 1700, reveal: first || nw.dataset.map === 'finale' });
+  replayCharts(nw); countUp(nw);
+  HOOKS[n + 1]?.enter?.();
+  $('#counter').innerHTML = `<b>${String(n + 1).padStart(2, '0')}</b> / ${String(N).padStart(2, '0')}`;
+  $('#progress i').style.width = ((n + 1) / N * 100) + '%';
+  const sec = $('#section'); sec.style.opacity = 0; setTimeout(() => { sec.textContent = n === 0 ? '' : nw.dataset.title; sec.style.opacity = 1; }, 300);
+  $('#hint').style.opacity = n === 0 ? 1 : 0;
+  $('#brand').style.opacity = n === 0 ? 0 : 1;
+  $('#notes-body').textContent = $('.notes', nw)?.textContent.trim() || '';
+  history.replaceState(null, '', '#' + (n + 1));
+}
+
+// scaling
+function fit() {
+  const s = Math.min(innerWidth / 1600, innerHeight / 900);
+  STAGE_SCALE = s; stage.style.transform = `scale(${s})`; MAP.resize(s);
+}
+addEventListener('resize', fit); fit();
+
+// input
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(k)) { e.preventDefault(); go(cur + 1); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(k)) { e.preventDefault(); go(cur - 1); }
+  else if (k === 'Home') go(0);
+  else if (k === 'End') go(N - 1);
+  else if (k === 'n' || k === 'N') $('#notes').classList.toggle('on');
+  else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); }
+  else if (k === '?') $('#help').classList.toggle('on');
+  else if (k === 'r' || k === 'R') { const h = HOOKS[cur + 1]; if (h?.replay) h.replay(); else { const s = slides[cur]; s.classList.remove('active'); void s.offsetWidth; s.classList.add('active'); replayCharts(s); countUp(s); h?.enter?.(); } }
+  else if (k === 'Escape') { $('#help').classList.remove('on'); $('#notes').classList.remove('on'); }
+});
+$('#prev').onclick = e => { go(cur - 1); e.currentTarget.blur(); };
+$('#next').onclick = e => { go(cur + 1); e.currentTarget.blur(); };
+$('#help').onclick = () => $('#help').classList.remove('on');
+let tx0 = null;
+addEventListener('touchstart', e => { tx0 = e.touches[0].clientX; }, { passive: true });
+addEventListener('touchend', e => { if (tx0 == null) return; const dx = e.changedTouches[0].clientX - tx0; if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1)); tx0 = null; });
+let wheelLock = 0;
+addEventListener('wheel', e => { const now = Date.now(); if (now < wheelLock || Math.abs(e.deltaY) < 30) return; wheelLock = now + 900; go(cur + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
+
+go(clamp((parseInt(location.hash.slice(1), 10) || 1) - 1, 0, N - 1));
+</script>
+</body>
+</html>
