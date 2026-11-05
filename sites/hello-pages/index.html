@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hello Pages</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+      font: 16px/1.7 system-ui, -apple-system, "Noto Sans SC", sans-serif;
+      background: #0d1117; color: #e6edf3;
+    }
+    .card { max-width: 520px; text-align: center; }
+    h1 { font-size: clamp(2rem, 8vw, 3rem); margin: 0 0 .4em; letter-spacing: -.03em; }
+    p { color: #8b949e; margin: 0 0 1.6em; }
+    .pill { display: inline-block; padding: 6px 14px; border-radius: 999px;
+            background: #1f6feb; color: #fff; font-size: .85rem; font-weight: 600; }
+    @media (prefers-color-scheme: light) {
+      body { background: #f6f7f9; color: #1a1c1f; }
+      p { color: #5c6672; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Hello, Pages!</h1>
+    <p>这个页面是通过提交一个 GitHub issue 自动部署的。</p>
+    <span class="pill">issue → Actions → Pages</span>
+  </div>
+</body>
+</html>

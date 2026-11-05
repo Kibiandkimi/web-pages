@@ -1,0 +1,19 @@
+{
+  "created_at": "2026-11-05T11:55:47Z",
+  "description": "最小可用的示例页面，用来验证 issue → GitHub Pages 全链路。",
+  "file_count": 1,
+  "issue": 1,
+  "size_bytes": 1148,
+  "slug": "hello-pages",
+  "source": {
+    "type": "inline",
+    "url": null
+  },
+  "status": "active",
+  "tags": [
+    "示例",
+    "验证"
+  ],
+  "title": "Hello Pages",
+  "updated_at": "2026-11-05T11:55:47Z"
+}
