@@ -4,7 +4,7 @@
   "file_count": 20,
   "issue": 2,
   "size_bytes": 3143607,
-  "slug": "focus-zip",
+  "slug": "focus-timer",
   "source": {
     "type": "zip",
     "url": "https://codeload.github.com/Kibiandkimi/focus/zip/refs/heads/main"
@@ -15,5 +15,5 @@
     "多文件"
   ],
   "title": "Focus 计时器（压缩包方式测试）",
-  "updated_at": "2026-11-05T11:58:58Z"
+  "updated_at": "2026-11-05T12:00:05Z"
 }
