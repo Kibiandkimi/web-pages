@@ -173,20 +173,22 @@ svg .t-m { fill: var(--muted); } svg .t-i { fill: var(--ink); font-weight: 600; 
 body.moved #hint, body.notes #hint, body.static #hint, body.static #progress { opacity: 0; }      /* the key hint is for the presenter, before the talk starts */
 @keyframes hint-out { to { opacity: 0; } }
 body:not(.static) #hint { animation: hint-out .6s 9s forwards; }      /* ... and it leaves the title poster by itself after a few seconds */
+@media (prefers-reduced-motion: reduce) { body:not(.static) #hint { animation: hint-out 1ms 9s forwards !important; } }      /* also on a PC that asks for no motion (Windows with animations switched off): there it simply goes */
 #jump { position: absolute; left: 50%; bottom: 44px; transform: translate(-50%, 8px); padding: 9px 16px; border-radius: 11px; background: var(--ink); color: var(--bg); font-size: 15px; font-weight: 600; white-space: pre;
   opacity: 0; transition: opacity .15s, transform .15s; }
 #jump.show { opacity: 1; transform: translate(-50%, 0); }
 #help { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -46%); opacity: 0; visibility: hidden; z-index: 20; background: var(--card); color: var(--ink2); padding: 26px 34px; border-radius: 18px;
-  box-shadow: 0 0 0 1px var(--line), 0 30px 80px rgba(0, 0, 0, .25); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 34px; font-size: 16px; transition: .25s; }
+  box-shadow: 0 0 0 1px var(--line), 0 30px 80px rgba(0, 0, 0, .25); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 34px; font-size: 16px; transition: .25s;
+  width: max-content; white-space: nowrap; }      /* as wide as its entries: a fixed box at left 50 % would otherwise be squeezed to half the window and wrap them */
 #help.show { opacity: 1; visibility: visible; transform: translate(-50%, -50%); } #help b { color: var(--ink); margin-right: 8px; }
 #tip { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; max-width: 300px; padding: 9px 13px; border-radius: 11px; background: var(--ink); color: var(--bg); font-size: 14px; line-height: 1.35;
   opacity: 0; transition: opacity .15s; box-shadow: 0 10px 30px rgba(0, 0, 0, .22); }
 #tip.show { opacity: 1; } #tip b { display: block; font-size: 17px; font-weight: 660; }
 aside.notes { display: none; }
-#notes { position: fixed; right: 0; top: 0; bottom: 0; width: 40%; padding: 34px 40px 30px; background: var(--bg2); border-left: 1px solid var(--line); display: none; flex-direction: column; z-index: 6; }
+#notes { position: fixed; right: 0; top: 0; bottom: 0; width: 40%; padding: 28px 40px 24px; background: var(--bg2); border-left: 1px solid var(--line); display: none; flex-direction: column; z-index: 6; }
 .n-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 650; }
 #n-time { font-size: 30px; letter-spacing: 0; color: var(--ink); font-variant-numeric: tabular-nums; cursor: pointer; font-weight: 400; }
-#n-body { flex: 1; overflow: auto; margin-top: 18px; font-size: 22px; font-size: clamp(17px, 1.55vw, 27px); line-height: 1.5; color: var(--ink); } #n-body p { margin: 0 0 .8em; }
+#n-body { flex: 1; overflow: auto; margin-top: 18px; font-size: 22px; font-size: clamp(17px, min(1.55vw, 2.9vh), 27px); line-height: 1.45; color: var(--ink); } #n-body p { margin: 0 0 .65em; }      /* the longest notes (slide 11, six paragraphs) fit a 1280 × 720 window without scrolling; the vh term keeps them fitting in a window that is not full screen */
 .n-next { font-size: 15px; color: var(--muted); padding-top: 14px; border-top: 1px solid var(--line); } .n-next span { color: var(--ink2); font-weight: 600; }
 body.notes #notes { display: flex; } body.notes #viewport { right: 40%; } body.notes #chrome { right: 40%; }
 
@@ -392,12 +394,12 @@ body:not(.overview) .beliefs[data-at="2"] .blist li.walk .bt, body:not(.overview
 /* ---------- the belief ticket and its verdict stamp: top right, inside the corner of the frame; the last click of 11, 13 and 15 ---------- */
 .has-verdict header { min-height: 157px; max-width: 960px; }      /* two headline lines: the body starts below the stamp on all three slides */
 .verdict { position: absolute; right: 94px; top: 50px; }      /* its top edge on the line of the kicker, its right edge on the right margin */
-.ticket { position: relative; width: 416px; height: 118px; padding: 14px 24px 0; border-radius: 12px; background: var(--paper); overflow: hidden;
+.ticket { position: relative; width: 432px; height: 118px; padding: 14px 24px 0; border-radius: 12px; background: var(--paper); overflow: hidden;
   box-shadow: inset 0 0 0 1.5px var(--line), 0 10px 26px rgba(70, 50, 20, .09); }
 .ticket::before, .ticket::after { content: ""; position: absolute; top: 50%; width: 20px; height: 20px; margin-top: -10px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--line); }
 .ticket::before { left: -11px; } .ticket::after { right: -11px; }      /* the two notches of a ticket */
 .tk-k { display: block; font-size: 15px; line-height: 18px; font-weight: 680; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-.tk-q { margin: 5px 0 0; display: flex; align-items: center; font-family: var(--serif); font-style: italic; font-size: 25px; line-height: 33px; white-space: nowrap; color: var(--ink); }      /* the longest belief (“CYCLE is never slowed down”) fits with 12 px to spare */
+.tk-q { margin: 5px 0 0; display: flex; align-items: center; font-family: var(--serif); font-style: italic; font-size: 25px; line-height: 33px; white-space: nowrap; color: var(--ink); }      /* the longest belief (“CYCLE is never slowed down”) is 376 px with its dot in Georgia (about 8 % wider than Liberation Serif): 8 px to spare in the 432 px ticket */
 .tk-q b { font-family: var(--font); font-style: normal; font-weight: 760; letter-spacing: -.01em; color: var(--tc, var(--ink)); }
 .tk-q .dot { width: 13px; height: 13px; margin-right: 12px; }
 .ticket.walk { --tc: var(--walk); } .ticket.bike { --tc: var(--bike); } .ticket.bus { --tc: var(--bus); }
@@ -572,13 +574,13 @@ body.overview .metro .mr[data-f], body.overview .metro .mr-e { opacity: 1; trans
   100% { transform: translateY(-75%); }
 }
 @keyframes k-shrug { 0%, 100% { transform: rotate(0deg); } 32% { transform: rotate(-8deg); } 66% { transform: rotate(5deg); } }
-/* a quick count, then the punchline — in that order: the "?" is readable from about 1.7 s, the sub-line rises under it (1.74–2.1 s), then the "?" tilts once.
-   Everything but that tilt is at rest 2.1 s after the click (qa.cjs wants a divider's title and sub-line settled by 2.4 s; with more time there,
-   the sub-line could wait a clearer beat). The title starts a little earlier than on the other dividers (--d0), so that the "I" can be read before the count leaves it. */
+/* a quick count, then the punchline — in that order, with a beat between them: the "?" is readable from about 1.7 s and starts to tilt at 1.9 s;
+   the sub-line rises under it while it tilts (2.1–2.46 s). Everything but the end of that tilt is at rest 2.5 s after the click (qa.cjs gives this
+   divider 3.0 s, the others 2.4 s). The title starts a little earlier than on the other dividers (--d0), so that the "I" can be read before the count leaves it. */
 #s-partend { --d0: 420ms; }
 .slide.live .roll-in { animation: k-roll 1.05s linear 770ms backwards; }
 .slide.live .q { animation: k-shrug .8s ease-in-out 1880ms backwards; }
-.slide.live#s-partend .band .ps { animation: k-rise .36s var(--ease) 1740ms backwards; }     /* the punchline follows the "?" */
+.slide.live#s-partend .band .ps { animation: k-rise .36s var(--ease) 2100ms backwards; }     /* the punchline follows the "?" */
 
 /* ---------- 22 thanks ---------- */
 .thanks { padding: 0; }
@@ -729,7 +731,7 @@ body.overview .metro .mr[data-f], body.overview .metro .mr-e { opacity: 1; trans
     </div>
   </div>
   <aside class="notes">
-    <p>Part two: statistics and analysis. Let's see what the data reveals.</p>
+    <p>Part two: statistics and analysis. Let’s see what the data reveals.</p>
   </aside>
 </section>
 
@@ -761,8 +763,8 @@ body.overview .metro .mr[data-f], body.overview .metro .mr-e { opacity: 1; trans
   <p class="strip quiet">A small sample, at one person’s pace: careful estimates, not exact facts. Weather, cost and comfort were not measured.</p>
   <aside class="notes">
     <p>First, our evidence. We measured it three ways. Eighty-one GPS tracks, over two months.</p>
-    <p>Thirty-eight trips timed with a stopwatch, door to door. And three hours of live bus positions from the shuttle's own tracker.</p>
-    <p>It is a small sample, at one person's pace. So please treat our numbers as careful estimates, not exact facts.</p>
+    <p>Thirty-eight trips timed with a stopwatch, door to door. And three hours of live bus positions from the shuttle’s own tracker.</p>
+    <p>It is a small sample, at one person’s pace. So please treat our numbers as careful estimates, not exact facts.</p>
   </aside>
 </section>
 
@@ -792,7 +794,7 @@ body.overview .metro .mr[data-f], body.overview .metro .mr-e { opacity: 1; trans
     <p>Now, the test: one trip, three ways. Imagine three students leaving Qiao Dorms together, all going to Huiwen, at the top of the hill.</p>
     <p>(Click: the race starts. One sentence per arrival.)</p>
     <p>The cyclist arrives in about six minutes. The shuttle passenger walks to the stop, waits, rides, and walks again: thirteen minutes. The walker needs eighteen.</p>
-    <p>Was your pick right? And keep in mind: this is the shuttle's best route from any dorm to any teaching building. The bike still wins.</p>
+    <p>Was your pick right? And keep in mind: this is the shuttle’s best route from any dorm to any teaching building. The bike still wins.</p>
     <p>So when is each one the right choice? My teammate will take them one by one.</p>
   </aside>
 </section>
@@ -887,7 +889,7 @@ body.overview .metro .mr[data-f], body.overview .metro .mr-e { opacity: 1; trans
     <div class="stamp a-stamp"><b>NOT QUITE</b></div>
   </div>
   <aside class="notes">
-    <p>But the bike is not perfect. First, hills. On a five percent slope, a cyclist needs about thirty percent more time. A walker needs only five.</p>
+    <p>But the bike is not perfect. First, hills. On a five per cent slope, a cyclist needs about thirty per cent more time. A walker needs only five.</p>
     <p>Second, steps. You get off and push, so steps cost a cyclist six times the normal time.</p>
     <p>Third, the class bell. On crowded shared paths, a bike takes a third longer, while walkers do not slow down at all.</p>
     <p>And on very short trips, the bike hardly saves any time.</p>
@@ -1033,7 +1035,7 @@ body.overview .metro .mr[data-f], body.overview .metro .mr-e { opacity: 1; trans
     <p>One: under three hundred metres, walk. The bike saves less than two minutes.</p>
     <p>Two: for anything further, cycle, even over the hill. Remember the test: up the hill to Huiwen, eighteen minutes on foot and six by bike.</p>
     <p>Three: take the shuttle only if a stop is near both doors, for example from Qiao or Haishan to Huiwen. Even on the best route, the bus must come within ten minutes, or walking wins.</p>
-    <p>And on foot or by bike, allow twenty percent extra time.</p>
+    <p>And on foot or by bike, allow twenty per cent extra time.</p>
   </aside>
 </section>
 
@@ -1131,6 +1133,7 @@ body.overview .metro .mr[data-f], body.overview .metro .mr-e { opacity: 1; trans
   <div><b>→ Space PgDn</b> next step</div><div><b>← PgUp</b> back</div><div><b>Home / End</b> first / last</div>
   <div><b>12 Enter</b> go to slide 12</div><div><b>O</b> overview</div><div><b>N</b> speaker notes</div>
   <div><b>R</b> replay animation</div><div><b>F</b> full screen</div><div><b>?</b> this help</div>
+  <div><b>Click</b> next (left edge: back)</div><div><b>1 2 3</b> the room’s pick, at the poll</div><div><b>Esc</b> close the overview</div>
 </div>
 <div id="tip" role="tooltip"></div>
 
