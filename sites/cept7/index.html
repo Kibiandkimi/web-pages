@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Walk, Cycle, or Shuttle? — SZU Yuehai Campus Commute Analysis (Group 7)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,400&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="viewport">
+    <main id="stage" role="application" aria-label="Walk, Cycle, or Shuttle Presentation">
+      <!-- Top Progress Line -->
+      <div class="deck-progress" aria-hidden="true">
+        <div class="deck-progress-fill" id="progress-fill"></div>
+      </div>
+
+      <!-- Subtle Living Topographical Contour Backdrop (moves smoothly between slides) -->
+      <svg id="ambient-contours" viewBox="0 0 1360 800" aria-hidden="true">
+        <g fill="none" stroke="#1C1A17" stroke-opacity="0.065" stroke-width="1.2">
+          <path d="M-80,140 C220,70 460,260 760,180 C1040,105 1190,220 1440,120" />
+          <path d="M-80,210 C240,130 480,320 790,245 C1060,180 1210,290 1440,195" />
+          <path d="M-80,580 C250,490 540,660 880,560 C1120,490 1260,610 1440,540" />
+          <path d="M-80,655 C280,570 560,730 900,640 C1140,575 1290,680 1440,620" />
+          <ellipse cx="1090" cy="145" rx="220" ry="115" />
+          <ellipse cx="1090" cy="145" rx="145" ry="72" />
+          <ellipse cx="185" cy="645" rx="210" ry="96" />
+        </g>
+      </svg>
+
+      <!-- ==================================================================
+           SLIDES DECK (16 Slides)
+           ================================================================== -->
+      <div id="slides">
+
+        <!-- SLIDE 1: COVER -->
+        <section class="slide active" id="s-cover" data-section="Cover" data-title="Walk, Cycle, or Shuttle?">
+          <div class="cover-grid">
+            <div>
+              <div class="campus-tag rv">Shenzhen University · Yuehai Campus</div>
+              <h1 class="cover-headline rv d1">
+                <span class="word-walk">WALK</span>,<br />
+                <span class="word-cycle">CYCLE</span> <span class="word-or">or</span><br />
+                <span class="word-shuttle">SHUTTLE</span>?
+              </h1>
+              <p class="cover-sub rv d2">
+                <strong>Real statistics — don’t guess, measure.</strong><br />
+                Comparing the pros, cons, and true door-to-door speed of campus commuting across 81 GPS tracks and live shuttle telemetry.
+              </p>
+              <div class="cover-meta rv d3">
+                <div class="cover-member">
+                  <span class="cover-member-name">Lin Shaoyang</span>
+                  <span class="cover-member-role">Unknown · Group 7</span>
+                </div>
+                <div class="cover-member">
+                  <span class="cover-member-name">Zhang Ruiming</span>
+                  <span class="cover-member-role">Kibi · Group 7</span>
+                </div>
+                <div class="cover-member">
+                  <span class="cover-member-name">Liu Shixuan</span>
+                  <span class="cover-member-role">Karl · Group 7</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cover-visual-card rv-right d2">
+              <div class="cover-visual-header">
+                <span>Yuehai Mobility Network · Live Motion</span>
+                <span class="live-badge">3.1 km Shuttle Ring</span>
+              </div>
+              <div class="cover-map-wrap">
+                <svg id="cover-map" class="svg-chart" role="img" aria-label="Animated Yuehai campus map with shuttle loop and cycling corridor"></svg>
+              </div>
+              <div class="cover-legend">
+                <span class="legend-item"><span class="mode-dot walk"></span>Dorm Hubs</span>
+                <span class="legend-item"><span class="mode-dot cycle"></span>Cycle Spine</span>
+                <span class="legend-item"><span class="mode-dot shuttle"></span>Shuttle Loop</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 2: ROADMAP -->
+        <section class="slide" id="s-roadmap" data-section="Overview" data-title="Presentation Structure">
+          <div class="eyebrow rv">Agenda</div>
+          <h2 class="slide-title rv d1">Our presentation is divided into three parts</h2>
+          <p class="slide-subtitle rv d2">From everyday campus rush-hour frustrations to GPS-measured evidence and a practical decision playbook.</p>
+
+          <div class="roadmap-grid">
+            <article class="card roadmap-card rv d2" data-jump="2">
+              <div>
+                <div class="roadmap-num">01</div>
+                <div class="roadmap-part">Part I · Introduction</div>
+                <h3 class="roadmap-title">Why we decided to study this</h3>
+                <p class="roadmap-desc">Crowded walkways, peak-hour bike bottlenecks, long shuttle queues, and tight class breaks leave no time to hesitate.</p>
+              </div>
+              <div class="roadmap-foot">
+                <span>Slides 03 – 06</span>
+                <span>Context & Myths →</span>
+              </div>
+            </article>
+
+            <article class="card roadmap-card rv d3" data-jump="6">
+              <div>
+                <div class="roadmap-num">02</div>
+                <div class="roadmap-part">Part II · Statistics & Analysis</div>
+                <h3 class="roadmap-title">What real GPS data reveals</h3>
+                <p class="roadmap-desc">81 GPS tracks, 3 hours of shuttle tracking, terrain slopes, and 380 campus origin-destination pairs put assumptions to the test.</p>
+              </div>
+              <div class="roadmap-foot">
+                <span>Slides 07 – 12</span>
+                <span>Evidence & Charts →</span>
+              </div>
+            </article>
+
+            <article class="card roadmap-card rv d4" data-jump="12">
+              <div>
+                <div class="roadmap-num">03</div>
+                <div class="roadmap-part">Part III · Results & Suggestions</div>
+                <h3 class="roadmap-title">What we should actually choose</h3>
+                <p class="roadmap-desc">A clear pros-and-cons breakdown for each mode, three simple campus rules, and an interactive route advisor.</p>
+              </div>
+              <div class="roadmap-foot">
+                <span>Slides 13 – 16</span>
+                <span>Trade-offs & Rules →</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- SLIDE 3: PART I DIVIDER -->
+        <section class="slide divider-slide" id="s-part1" data-section="Part I · Introduction" data-title="Part I: Introduction">
+          <div class="divider-ghost-num" aria-hidden="true">I</div>
+          <div class="divider-line"></div>
+          <div class="divider-kicker rv">Part I · Introduction</div>
+          <h2 class="divider-title rv d1">Why we decided to present this</h2>
+          <p class="divider-sub rv d2">Every day on Yuehai Campus starts with the same five-second gamble between three very different commutes.</p>
+        </section>
+
+        <!-- SLIDE 4: COMMUTE PAIN POINTS -->
+        <section class="slide" id="s-pain" data-section="Part I · Introduction" data-title="Do you suffer from commuting?">
+          <div class="eyebrow rv">Daily Friction</div>
+          <h2 class="slide-title rv d1">Do you usually suffer from campus commuting?</h2>
+          <p class="slide-subtitle rv d2">Each mode looks tempting until the bell rings at 8:20 AM or 1:50 PM.</p>
+
+          <div class="pain-grid">
+            <!-- Scene 1: Walk Crowds -->
+            <div class="card pain-card rv-left d2">
+              <div class="pain-stage">
+                <svg viewBox="0 0 320 200" width="100%" height="100%" aria-hidden="true">
+                  <rect x="20" y="138" width="280" height="36" rx="8" fill="#EDE6D6" />
+                  <!-- Animated crowd silhouettes -->
+                  <g style="animation: pedSway 2.4s ease-in-out infinite;">
+                    <circle cx="72" cy="86" r="11" fill="#AE700E" />
+                    <path d="M58,138 C58,104 86,104 86,138 Z" fill="#AE700E" opacity="0.88" />
+                  </g>
+                  <g style="animation: pedSway 2.1s ease-in-out 0.3s infinite;">
+                    <circle cx="116" cy="78" r="12" fill="#1C1A17" />
+                    <path d="M100,138 C100,98 132,98 132,138 Z" fill="#1C1A17" opacity="0.82" />
+                  </g>
+                  <g style="animation: pedSway 2.6s ease-in-out 0.5s infinite;">
+                    <circle cx="162" cy="84" r="11" fill="#AE700E" />
+                    <path d="M147,138 C147,103 177,103 177,138 Z" fill="#AE700E" opacity="0.95" />
+                  </g>
+                  <g style="animation: pedSway 2.2s ease-in-out 0.15s infinite;">
+                    <circle cx="206" cy="79" r="12" fill="#4D4840" />
+                    <path d="M190,138 C190,99 222,99 222,138 Z" fill="#4D4840" opacity="0.85" />
+                  </g>
+                  <g style="animation: pedSway 2.5s ease-in-out 0.65s infinite;">
+                    <circle cx="248" cy="88" r="10" fill="#AE700E" />
+                    <path d="M235,138 C235,106 261,106 261,138 Z" fill="#AE700E" opacity="0.72" />
+                  </g>
+                  <text x="160" y="34" text-anchor="middle" fill="#AE700E" font-size="12" font-weight="700" font-family="var(--font-mono)">STAIRS · HEAT · 18 MIN TREKS</text>
+                </svg>
+              </div>
+              <div class="pain-tag"><span class="mode-dot walk"></span>Walking</div>
+              <h3 class="pain-title">“Thousands” of people</h3>
+              <p class="pain-desc">Long cross-campus paths take 15–20 minutes on foot, climbing stairs in Shenzhen heat while weaving through class crowds.</p>
+            </div>
+
+            <!-- Scene 2: Bike Traffic Jam -->
+            <div class="card pain-card rv d3">
+              <div class="pain-stage">
+                <svg viewBox="0 0 320 200" width="100%" height="100%" aria-hidden="true">
+                  <!-- Sloped road -->
+                  <path d="M16,154 L304,116 L304,168 L16,168 Z" fill="#EDE6D6" />
+                  <line x1="20" y1="154" x2="300" y2="116" stroke="#0B8F86" stroke-width="2.5" stroke-dasharray="7 6" />
+                  <!-- Bicycle graphic climbing slope -->
+                  <g transform="translate(106, 86) rotate(-7)">
+                    <circle cx="20" cy="44" r="16" fill="none" stroke="#0B8F86" stroke-width="3.5" />
+                    <circle cx="82" cy="44" r="16" fill="none" stroke="#0B8F86" stroke-width="3.5" />
+                    <path d="M20,44 L48,44 L66,18 L34,18 Z M66,18 L82,44 M62,10 L74,10" fill="none" stroke="#1C1A17" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                  </g>
+                  <!-- Congestion warning pulse -->
+                  <circle cx="242" cy="80" r="18" fill="rgba(200,40,40,0.12)" />
+                  <text x="242" y="85" text-anchor="middle" fill="#C82828" font-size="16" font-weight="800">−25%</text>
+                  <text x="160" y="34" text-anchor="middle" fill="#0B8F86" font-size="12" font-weight="700" font-family="var(--font-mono)">HILLS · PEDESTRIAN BOTTLENECKS</text>
+                </svg>
+              </div>
+              <div class="pain-tag"><span class="mode-dot cycle"></span>Cycling</div>
+              <h3 class="pain-title">Traffic jam on paths?</h3>
+              <p class="pain-desc">Pedestrian alleys choke bicycles at peak class hours, steep campus hills sap momentum, and parking racks overflow.</p>
+            </div>
+
+            <!-- Scene 3: Infinite Shuttle Queue -->
+            <div class="card pain-card rv-right d4">
+              <div class="pain-stage">
+                <svg viewBox="0 0 320 200" width="100%" height="100%" aria-hidden="true">
+                  <rect x="20" y="142" width="280" height="24" rx="6" fill="#EDE6D6" />
+                  <!-- Bus stop sign -->
+                  <line x1="62" y1="74" x2="62" y2="146" stroke="#1C1A17" stroke-width="3" />
+                  <rect x="46" y="60" width="32" height="20" rx="5" fill="#6A55D6" />
+                  <text x="62" y="74" text-anchor="middle" fill="#FFFFFF" font-size="9.5" font-weight="800">BUS</text>
+                  <!-- Waiting queue dots -->
+                  <g fill="#6A55D6" style="animation: queueDrift 3s ease-in-out infinite;">
+                    <circle cx="96" cy="128" r="6" />
+                    <circle cx="116" cy="128" r="6" opacity="0.88" />
+                    <circle cx="136" cy="128" r="6" opacity="0.76" />
+                    <circle cx="156" cy="128" r="6" opacity="0.64" />
+                    <circle cx="176" cy="128" r="6" opacity="0.52" />
+                    <circle cx="196" cy="128" r="6" opacity="0.40" />
+                    <circle cx="216" cy="128" r="6" opacity="0.28" />
+                  </g>
+                  <!-- Distant shuttle silhouette -->
+                  <g transform="translate(234, 96)">
+                    <rect x="0" y="14" width="56" height="28" rx="7" fill="#6A55D6" />
+                    <rect x="8" y="19" width="16" height="10" rx="2" fill="#FAF7F0" />
+                    <rect x="28" y="19" width="20" height="10" rx="2" fill="#FAF7F0" />
+                    <circle cx="14" cy="43" r="5" fill="#1C1A17" />
+                    <circle cx="44" cy="43" r="5" fill="#1C1A17" />
+                  </g>
+                  <text x="160" y="34" text-anchor="middle" fill="#6A55D6" font-size="12" font-weight="700" font-family="var(--font-mono)">WAIT · FULL BUS · DETOUR WALK</text>
+                </svg>
+              </div>
+              <div class="pain-tag"><span class="mode-dot shuttle"></span>Campus Shuttle</div>
+              <h3 class="pain-title">(Almost) infinite queue</h3>
+              <p class="pain-desc">Waiting for a loop bus that arrives full — and then still walking 5–10 minutes from the stop to your building.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 5: TIME PRESSURE / CLASS BREAKS -->
+        <section class="slide" id="s-breaks" data-section="Part I · Introduction" data-title="No time to hesitate">
+          <div class="eyebrow rv">But What’s Worse...</div>
+          <h2 class="slide-title rv d1">Do you even have time to hesitate?</h2>
+          <p class="slide-subtitle rv d2">SZU class breaks leave razor-thin windows — picking the wrong mode turns an on-time arrival into a late entrance.</p>
+
+          <div class="break-layout">
+            <div class="break-cards">
+              <div class="card break-row rv d2">
+                <div class="break-mins">5<span>min</span></div>
+                <div>
+                  <div class="break-label">Short Intermission</div>
+                  <div class="break-note">Same-wing transfer only; walking reaches 6 of 30 teaching pairs.</div>
+                </div>
+                <span class="mode-pill"><span class="mode-dot walk"></span>Adjacent</span>
+              </div>
+
+              <div class="card break-row rv d3">
+                <div class="break-mins">10<span>min</span></div>
+                <div>
+                  <div class="break-label">Evening Class Break</div>
+                  <div class="break-note">Walking reaches 40% of teaching pairs; cycling reaches 100%.</div>
+                </div>
+                <span class="mode-pill"><span class="mode-dot cycle"></span>Cycle wins</span>
+              </div>
+
+              <div class="card break-row rv d4">
+                <div class="break-mins">20<span>min</span></div>
+                <div>
+                  <div class="break-label">Major Morning / Afternoon Break</div>
+                  <div class="break-note">Still too tight to walk Huiwen ↔ CS & SE (23+ min on foot).</div>
+                </div>
+                <span class="mode-pill"><span class="mode-dot shuttle"></span>1.7 km span</span>
+              </div>
+            </div>
+
+            <div class="card break-meter-wrap rv-right d3">
+              <div class="break-meter-title">Example: Huiwen Bldg → Zhili Bldg (1,378 m)</div>
+              <div class="break-bar-group">
+                <div>
+                  <div class="b-row-head">
+                    <span class="legend-item"><span class="mode-dot cycle"></span>Cycle (peak)</span>
+                    <span style="font-family:var(--font-mono);font-weight:700;">6.6 min ✓</span>
+                  </div>
+                  <div class="b-track"><div class="b-fill" data-w="31" style="background:var(--cycle);"></div></div>
+                </div>
+
+                <div>
+                  <div class="b-row-head">
+                    <span class="legend-item"><span class="mode-dot walk"></span>Walk direct</span>
+                    <span style="font-family:var(--font-mono);font-weight:700;">19.0 min !</span>
+                  </div>
+                  <div class="b-track"><div class="b-fill" data-w="90" style="background:var(--walk);"></div></div>
+                </div>
+
+                <div>
+                  <div class="b-row-head">
+                    <span class="legend-item"><span class="mode-dot shuttle"></span>Shuttle (+4m wait)</span>
+                    <span style="font-family:var(--font-mono);font-weight:700;">21.2 min ✕</span>
+                  </div>
+                  <div class="b-track"><div class="b-fill" data-w="100" style="background:var(--shuttle);"></div></div>
+                </div>
+              </div>
+              <div class="takeaway-strip" style="margin-top:8px;">
+                <div><strong>14.6 minutes</strong> separate the fastest and slowest choice on the exact same cross-campus class rush.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 6: THREE COMMON MYTHS -->
+        <section class="slide" id="s-myths" data-section="Part I · Introduction" data-title="Three Campus Myths">
+          <div class="eyebrow rv">Testing Intuition</div>
+          <h2 class="slide-title rv d1">Every student has a favorite belief — is it right?</h2>
+          <p class="slide-subtitle rv d2">Before trusting campus folklore, we put the three classic claims under GPS measurement.</p>
+
+          <div class="myths-layout">
+            <div class="card myth-card rv d2">
+              <span class="mode-pill"><span class="mode-dot walk"></span>WALK</span>
+              <div class="myth-quote">“Walking is the most flexible — I can go anywhere at a steady pace.”</div>
+              <div class="myth-verdict">Partly true<span>Reliable, but 2.7× slower</span></div>
+            </div>
+
+            <div class="card myth-card rv d3">
+              <span class="mode-pill"><span class="mode-dot cycle"></span>CYCLE</span>
+              <div class="myth-quote">“Nothing disturbs a bike — speed depends only on the rider.”</div>
+              <div class="myth-verdict">Myth busted<span>Slopes & peak crowds hit hard</span></div>
+            </div>
+
+            <div class="card myth-card rv d4">
+              <span class="mode-pill"><span class="mode-dot shuttle"></span>SHUTTLE</span>
+              <div class="myth-quote">“The shuttle is always the fastest way, no matter when or where.”</div>
+              <div class="myth-verdict">Biggest myth<span>Beats walking on only 12% of trips</span></div>
+            </div>
+
+            <div class="myth-question-bar rv d5">
+              <div>
+                <h3>Is that really right?</h3>
+                <p>We spent several weeks recording real GPS tracks and live shuttle telemetry across Yuehai Campus.</p>
+              </div>
+              <div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:#F2C572;">LET’S SEE THE DATA →</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 7: PART II DIVIDER -->
+        <section class="slide divider-slide" id="s-part2" data-section="Part II · Statistics & Analysis" data-title="Part II: Statistics & Analysis">
+          <div class="divider-ghost-num" aria-hidden="true">II</div>
+          <div class="divider-line" style="background:var(--cycle);"></div>
+          <div class="divider-kicker rv" style="color:var(--cycle);">Part II · Statistics & Analysis</div>
+          <h2 class="divider-title rv d1">What the data reveals</h2>
+          <p class="divider-sub rv d2">Measured speeds, elevation slopes, peak-hour bottlenecks, and door-to-door shuttle reality across 380 campus routes.</p>
+        </section>
+
+        <!-- SLIDE 8: DATASET & METHODOLOGY -->
+        <section class="slide" id="s-method" data-section="Part II · Statistics & Analysis" data-title="How We Measured Campus">
+          <div class="eyebrow rv" style="color:var(--cycle);">Measurement Scope</div>
+          <h2 class="slide-title rv d1">81 GPS tracks, 3 hours of shuttle telemetry, 380 routes</h2>
+
+          <div class="method-layout">
+            <div class="kpi-grid">
+              <div class="card kpi-tile rv d1">
+                <span class="kpi-label">GPS Tracks Logged</span>
+                <span class="kpi-val" data-count="81" data-decimals="0">81</span>
+                <span class="kpi-sub">50 bike · 26 walk · 5 run (86.5 km)</span>
+              </div>
+              <div class="card kpi-tile rv d2">
+                <span class="kpi-label">Shuttle Telemetry</span>
+                <span class="kpi-val" data-count="180" data-decimals="0" data-suffix="m">180m</span>
+                <span class="kpi-sub">7 tracked buses · 3 GPS rides</span>
+              </div>
+              <div class="card kpi-tile rv d3">
+                <span class="kpi-label">Campus Relief</span>
+                <span class="kpi-val" data-count="30" data-decimals="0" data-suffix=" m">30 m</span>
+                <span class="kpi-sub">Elevation span 4 m → 34 m</span>
+              </div>
+              <div class="card kpi-tile rv d4">
+                <span class="kpi-label">Model Accuracy</span>
+                <span class="kpi-val" data-count="3" data-decimals="0" data-suffix="%">3%</span>
+                <span class="kpi-sub">Median edge error (2.9% bike, 3.6% walk)</span>
+              </div>
+              <div class="method-note rv d5">
+                <strong>Door-to-door fairness:</strong> Every route time across all <strong>20 hubs (380 pairs)</strong> includes walking to/from bike racks or shuttle stops, slope penalties, and class-peak crowd slowdowns.
+              </div>
+            </div>
+
+            <div class="card map-panel rv-right d2">
+              <div class="map-panel-head">
+                <span class="map-panel-title">Yuehai Campus Network & Elevation Gradient</span>
+                <span style="font-size:12px;color:var(--ink-muted);">Hover landmarks for details</span>
+              </div>
+              <div class="map-svg-box">
+                <svg id="method-map" class="svg-chart" role="img" aria-label="Campus road network and 20 hubs map"></svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 9: HEAD-TO-HEAD COMPARISON -->
+        <section class="slide" id="s-h2h" data-section="Part II · Statistics & Analysis" data-title="Head-to-Head Commute Times">
+          <div class="chart-header-row">
+            <div>
+              <div class="eyebrow rv" style="color:var(--cycle);">Door-to-Door Race</div>
+              <h2 class="slide-title rv d1">Cycling wins every route — 2.7× faster</h2>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;" class="rv d2">
+              <div class="seg-toggle" id="h2h-toggle" role="group" aria-label="Traffic condition">
+                <button class="seg-btn active" data-val="peak">Peak (+4m wait)</button>
+                <button class="seg-btn" data-val="off">Off-Peak (0m)</button>
+              </div>
+              <button class="table-toggle-btn" data-target="table-h2h" aria-expanded="false">Table</button>
+            </div>
+          </div>
+
+          <div class="card chart-card rv d2">
+            <div class="legend-row" style="margin-bottom:6px;">
+              <span class="legend-item"><span class="legend-swatch" style="background:var(--walk);"></span>Walk</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:var(--cycle);"></span>Cycle</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:var(--shuttle);"></span>Shuttle (door-to-door)</span>
+            </div>
+            <div style="flex:1;min-height:0;">
+              <svg id="chart-h2h" class="svg-chart" role="img" aria-label="Grouped bar chart comparing Walk, Cycle, and Shuttle times on four routes"></svg>
+            </div>
+            <!-- Accessible Data Table Overlay -->
+            <div class="data-table-overlay" id="table-h2h">
+              <strong style="font-size:14px;">Door-to-Door Commute Times (minutes)</strong>
+              <table class="a11y-table">
+                <thead>
+                  <tr><th>Route</th><th class="num">Distance</th><th class="num">Walk</th><th class="num">Cycle (off / peak)</th><th class="num">Shuttle (0m / +4m wait)</th></tr>
+                </thead>
+                <tbody id="table-h2h-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="takeaway-strip rv d3" style="margin-top:14px;border-left-color:var(--cycle);">
+            <div>Across all <strong>380 campus pairs</strong>, cycling is the fastest option <strong>100% of the time</strong> (median 4.1 min vs 11.5 min walking).</div>
+          </div>
+        </section>
+
+        <!-- SLIDE 10: TERRAIN & PEAK CROWDS -->
+        <section class="slide" id="s-slope" data-section="Part II · Statistics & Analysis" data-title="Hills & Peak Crowds">
+          <div class="chart-header-row">
+            <div>
+              <div class="eyebrow rv" style="color:var(--cycle);">Hidden Costs of Cycling</div>
+              <h2 class="slide-title rv d1">Hills bend bike speed; walking barely flinches</h2>
+            </div>
+            <button class="table-toggle-btn rv d2" data-target="table-slope" aria-expanded="false">Table</button>
+          </div>
+
+          <div class="split-viz">
+            <div class="card chart-card rv d2" style="margin-top:0;">
+              <div class="legend-row" style="margin-bottom:6px;">
+                <span class="legend-item"><span class="legend-swatch" style="background:var(--cycle);"></span>Cycle speed (km/h)</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:var(--walk);"></span>Walk speed (km/h)</span>
+              </div>
+              <div style="flex:1;min-height:0;">
+                <svg id="chart-slope" class="svg-chart" role="img" aria-label="Line chart of cycling and walking speed against road grade from -5% to +6%"></svg>
+              </div>
+              <div class="data-table-overlay" id="table-slope">
+                <strong style="font-size:14px;">Learned Speed by Road Grade</strong>
+                <table class="a11y-table">
+                  <thead><tr><th>Road Grade</th><th class="num">Walk Speed</th><th class="num">Cycle Speed</th></tr></thead>
+                  <tbody id="table-slope-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="viz-side">
+              <div class="card stat-callout rv d3">
+                <span class="stat-callout-lbl">Pedestrian Paths at Peak</span>
+                <span class="stat-callout-num accent-red">−25%</span>
+                <p class="stat-callout-desc">Bikes lose a quarter of speed on crowded walkways (0.75×), while main vehicle roads stay unaffected (1.00×).</p>
+              </div>
+              <div class="card stat-callout rv d4">
+                <span class="stat-callout-lbl">Northbound Uphill Penalty</span>
+                <span class="stat-callout-num">+14%</span>
+                <p class="stat-callout-desc">Zhili → Huiwen (+28 m climb) takes 7.6 min by bike vs 6.6 min downhill; walking differs by just 1%.</p>
+              </div>
+              <div class="card stat-callout rv d5">
+                <span class="stat-callout-lbl">Stairs & Footbridges</span>
+                <span class="stat-callout-num">−84%</span>
+                <p class="stat-callout-desc">Steps cut bike pace to 16% (forced to carry/detour), while walking keeps 46% speed on stairs.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 11: SHUTTLE PARADOX -->
+        <section class="slide" id="s-shuttle" data-section="Part II · Statistics & Analysis" data-title="The Shuttle Paradox">
+          <div class="chart-header-row">
+            <div>
+              <div class="eyebrow rv" style="color:var(--shuttle);">Where Shuttle Time Goes</div>
+              <h2 class="slide-title rv d1">The shuttle moves fast — but 85% of your trip isn’t riding</h2>
+            </div>
+            <button class="table-toggle-btn rv d2" data-target="table-shuttle" aria-expanded="false">Table</button>
+          </div>
+
+          <div class="split-viz">
+            <div class="card chart-card rv d2" style="margin-top:0;">
+              <div class="legend-row" style="margin-bottom:8px;">
+                <span class="legend-item"><span class="legend-swatch" style="background:#AE700E;"></span>Walk to stop</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#C82828;"></span>Wait (~4.1m)</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#6A55D6;"></span>Ride</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#D4A048;"></span>Walk from stop</span>
+              </div>
+              <div style="flex:1;min-height:0;">
+                <svg id="chart-shuttle" class="svg-chart" role="img" aria-label="Horizontal stacked bar chart breaking down shuttle door-to-door travel time"></svg>
+              </div>
+              <div class="data-table-overlay" id="table-shuttle">
+                <strong style="font-size:14px;">Shuttle Door-to-Door Breakdown (minutes)</strong>
+                <table class="a11y-table">
+                  <thead><tr><th>Route</th><th class="num">To Stop</th><th class="num">Wait</th><th class="num">Ride</th><th class="num">From Stop</th><th class="num">Total</th><th class="num">Direct Walk</th></tr></thead>
+                  <tbody id="table-shuttle-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="viz-side">
+              <div class="card stat-callout rv d3">
+                <span class="stat-callout-lbl">Beats Walking (with 4m wait)</span>
+                <span class="stat-callout-num accent-shuttle">12%</span>
+                <p class="stat-callout-desc">Only <strong>44 of 380</strong> campus pairs are faster by shuttle than walking — and 0 beat cycling.</p>
+              </div>
+              <div class="card stat-callout rv d4">
+                <span class="stat-callout-lbl">Cruising vs True Speed</span>
+                <span class="stat-callout-num">17 → 12</span>
+                <p class="stat-callout-desc">km/h. Buses cruise at 17.3 km/h, but 47s stop dwells pull net ride speed down to ~12–14 km/h.</p>
+              </div>
+              <div class="card stat-callout rv d5">
+                <span class="stat-callout-lbl">Sweet Spot</span>
+                <span class="stat-callout-num">&gt;1.2 km</span>
+                <p class="stat-callout-desc">Shuttle wins when both ends sit beside ring stops — e.g. Qiao Dorms → Huiwen saves 5.6 min over walking.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 12: REACHABILITY & BREAK FEASIBILITY -->
+        <section class="slide" id="s-reach" data-section="Part II · Statistics & Analysis" data-title="Campus Reach & Class Breaks">
+          <div class="eyebrow rv" style="color:var(--cycle);">Spatial Reach</div>
+          <h2 class="slide-title rv d1">A bike puts almost the entire campus inside 5 minutes</h2>
+
+          <div class="split-viz">
+            <div class="card chart-card rv d2" style="margin-top:0;">
+              <div class="legend-row" style="margin-bottom:4px;">
+                <span class="legend-item"><span class="legend-swatch" style="background:var(--cycle);"></span>Cycle reach</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:var(--walk);"></span>Walk reach</span>
+              </div>
+              <div style="flex:1;min-height:0;">
+                <svg id="chart-reach" class="svg-chart" role="img" aria-label="Isochrone reach comparison and teaching building break feasibility"></svg>
+              </div>
+            </div>
+
+            <div class="viz-side">
+              <div class="card stat-callout rv d3">
+                <span class="stat-callout-lbl">10-Minute Teaching Transfers</span>
+                <span class="stat-callout-num accent-cycle">30 / 30</span>
+                <p class="stat-callout-desc">Every teaching-to-teaching transfer fits inside a 10-min break by bike (even at peak), vs only 12/30 on foot.</p>
+              </div>
+              <div class="card stat-callout rv d4">
+                <span class="stat-callout-lbl">5-Min Reach from Zhai Dorms</span>
+                <span class="stat-callout-num">18 vs 4</span>
+                <p class="stat-callout-desc">Cycling reaches 18 of 19 major hubs in 5 minutes; walking reaches 4 nearby buildings.</p>
+              </div>
+              <div class="card stat-callout rv d5">
+                <span class="stat-callout-lbl">Reliability Edge of Walking</span>
+                <span class="stat-callout-num">0 min</span>
+                <p class="stat-callout-desc">Zero wait, zero unlocking, zero parking hunt — making walking unbeatable under 500 m.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 13: PART III DIVIDER -->
+        <section class="slide divider-slide" id="s-part3" data-section="Part III · Results & Recommendations" data-title="Part III: Results & Suggestions">
+          <div class="divider-ghost-num" aria-hidden="true">III</div>
+          <div class="divider-line" style="background:var(--shuttle);"></div>
+          <div class="divider-kicker rv" style="color:var(--shuttle);">Part III · Results & Suggestions</div>
+          <h2 class="divider-title rv d1">What should we choose?</h2>
+          <p class="divider-sub rv d2">Weighing every mode’s real pros and cons, then turning the numbers into three effortless daily habits.</p>
+        </section>
+
+        <!-- SLIDE 14: PROS & CONS COMPARISON MATRIX -->
+        <section class="slide" id="s-proscons" data-section="Part III · Results & Recommendations" data-title="Pros & Cons of Each Mode">
+          <div class="eyebrow rv" style="color:var(--shuttle);">Balanced Verdict</div>
+          <h2 class="slide-title rv d1">Every mode has a clear strength — and a clear trap</h2>
+
+          <div class="proscons-grid">
+            <!-- WALK -->
+            <article class="card pc-card rv d1">
+              <div class="pc-bar" style="background:var(--walk);"></div>
+              <div class="pc-head">
+                <h3 class="pc-mode">Walk</h3>
+                <span class="pc-speed">4.5 km/h</span>
+              </div>
+              <div>
+                <div class="pc-section-lbl">Pros</div>
+                <ul class="pc-list pros">
+                  <li>Zero waiting, zero parking, zero fare.</li>
+                  <li>Immune to crowds and slopes (&lt;3% uphill change).</li>
+                  <li>Direct stair shortcuts bikes and buses cannot use.</li>
+                </ul>
+              </div>
+              <div>
+                <div class="pc-section-lbl">Cons</div>
+                <ul class="pc-list cons">
+                  <li>2.7× slower than cycling across campus.</li>
+                  <li>Misses 60% of 10-min cross-building class breaks.</li>
+                  <li>Tiring in summer heat or rain past 800 m.</li>
+                </ul>
+              </div>
+              <div class="pc-verdict">Best for: Trips under 500 m &amp; stair-heavy shortcuts.</div>
+            </article>
+
+            <!-- CYCLE -->
+            <article class="card pc-card rv d2">
+              <div class="pc-bar" style="background:var(--cycle);"></div>
+              <div class="pc-head">
+                <h3 class="pc-mode">Cycle</h3>
+                <span class="pc-speed">15.8 km/h</span>
+              </div>
+              <div>
+                <div class="pc-section-lbl">Pros</div>
+                <ul class="pc-list pros">
+                  <li>Fastest on 100% of 380 campus routes (median 4.1m).</li>
+                  <li>Reaches all 30 teaching pairs within a 10-min break.</li>
+                  <li>Main roads stay smooth even during class peaks.</li>
+                </ul>
+              </div>
+              <div>
+                <div class="pc-section-lbl">Cons</div>
+                <ul class="pc-list cons">
+                  <li>−25% slower on crowded pedestrian paths at peak.</li>
+                  <li>Northbound climbs cut speed down to ~12 km/h.</li>
+                  <li>Shared-bike hunt, rack parking, and rain exposure.</li>
+                </ul>
+              </div>
+              <div class="pc-verdict">Best for: Any rush &gt;500 m &amp; tight class transfers.</div>
+            </article>
+
+            <!-- SHUTTLE -->
+            <article class="card pc-card rv d3">
+              <div class="pc-bar" style="background:var(--shuttle);"></div>
+              <div class="pc-head">
+                <h3 class="pc-mode">Shuttle</h3>
+                <span class="pc-speed">12–17 km/h</span>
+              </div>
+              <div>
+                <div class="pc-section-lbl">Pros</div>
+                <ul class="pc-list pros">
+                  <li>Effortless, sheltered from rain and midday sun.</li>
+                  <li>Saves 5–6 min over walking on long ring-side routes.</li>
+                  <li>Ideal with luggage, heavy bags, or after sports.</li>
+                </ul>
+              </div>
+              <div>
+                <div class="pc-section-lbl">Cons</div>
+                <ul class="pc-list cons">
+                  <li>Stop walking + ~4.1m wait eat 85% of total trip time.</li>
+                  <li>Beats walking on only 12% of pairs; never beats bikes.</li>
+                  <li>Full buses and fewer Sunday vehicles stretch waits.</li>
+                </ul>
+              </div>
+              <div class="pc-verdict">Best for: &gt;1.2 km ring-to-ring trips or bad weather.</div>
+            </article>
+          </div>
+        </section>
+
+        <!-- SLIDE 15: ACTIONABLE RECOMMENDATIONS + INTERACTIVE ROUTE ADVISOR -->
+        <section class="slide" id="s-recommend" data-section="Part III · Results & Recommendations" data-title="Smart Commute Playbook">
+          <div class="eyebrow rv" style="color:var(--shuttle);">Practical Suggestions</div>
+          <h2 class="slide-title rv d1">Three simple rules — plus a live campus route advisor</h2>
+
+          <div class="rec-layout">
+            <div class="rules-stack">
+              <div class="card rule-card rv d1">
+                <div class="rule-badge" style="background:var(--walk);">R1</div>
+                <div>
+                  <div class="rule-title">Under 500 m (≤ 6 min walk)? Just walk.</div>
+                  <div class="rule-text">Unlocking and parking a shared bike eats 1–2 min, wiping out the speed edge on short hops like South Dorms → Zhizhen.</div>
+                </div>
+              </div>
+
+              <div class="card rule-card rv d2">
+                <div class="rule-badge" style="background:var(--cycle);">R2</div>
+                <div>
+                  <div class="rule-title">Tight break or cross-campus? Cycle on main roads.</div>
+                  <div class="rule-text">Bypass pedestrian alleys during 10-min peaks to avoid the −25% crowd slowdown, and budget +1 extra minute when climbing north.</div>
+                </div>
+              </div>
+
+              <div class="card rule-card rv d3">
+                <div class="rule-badge" style="background:var(--shuttle);">R3</div>
+                <div>
+                  <div class="rule-title">Take the shuttle only if both stops are ≤ 3 min away.</div>
+                  <div class="rule-text">Check live bus location first: if your wait exceeds 4–5 min on a mid-length route, walking beats waiting.</div>
+                </div>
+              </div>
+
+              <div class="card rule-card rv d4" style="background:var(--surface-tint);border-color:transparent;">
+                <div class="rule-badge" style="background:var(--ink);">Tip</div>
+                <div>
+                  <div class="rule-title">For campus planners</div>
+                  <div class="rule-text">South Dorms &amp; Zhili sit 7–10 min from shuttle stops — adding a South Campus feeder link and peak-hour bike lanes would unlock the biggest gains.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Live Advisor powered by real trackstudy OD data -->
+            <div class="card advisor-panel rv-right d2">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <strong style="font-size:15px;">Try Our Measured Route Advisor</strong>
+                <div class="seg-toggle" id="adv-peak-toggle">
+                  <button class="seg-btn active" data-val="peak">Peak</button>
+                  <button class="seg-btn" data-val="off">Off-peak</button>
+                </div>
+              </div>
+
+              <div class="advisor-controls">
+                <div class="advisor-field">
+                  <label for="adv-origin">Start Hub</label>
+                  <select id="adv-origin" class="advisor-select"></select>
+                </div>
+                <div class="advisor-field">
+                  <label for="adv-dest">Destination</label>
+                  <select id="adv-dest" class="advisor-select"></select>
+                </div>
+              </div>
+
+              <div class="advisor-bars">
+                <div class="adv-bar-row">
+                  <div class="adv-bar-lbl"><span class="mode-dot walk"></span>Walk</div>
+                  <div class="adv-track"><div class="adv-fill" id="adv-bar-walk" style="background:var(--walk);"></div></div>
+                  <div class="adv-val" id="adv-val-walk">--</div>
+                </div>
+                <div class="adv-bar-row">
+                  <div class="adv-bar-lbl"><span class="mode-dot cycle"></span>Cycle</div>
+                  <div class="adv-track"><div class="adv-fill" id="adv-bar-cycle" style="background:var(--cycle);"></div></div>
+                  <div class="adv-val" id="adv-val-cycle">--</div>
+                </div>
+                <div class="adv-bar-row">
+                  <div class="adv-bar-lbl"><span class="mode-dot shuttle"></span>Shuttle</div>
+                  <div class="adv-track"><div class="adv-fill" id="adv-bar-shuttle" style="background:var(--shuttle);"></div></div>
+                  <div class="adv-val" id="adv-val-shuttle">--</div>
+                </div>
+              </div>
+
+              <div class="advisor-verdict">
+                <div class="advisor-verdict-main" id="adv-verdict-main">Select any origin and destination to compare.</div>
+                <div class="advisor-verdict-meta" id="adv-verdict-meta">--</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 16: CLOSING -->
+        <section class="slide closing-slide" id="s-end" data-section="Part ? · The End" data-title="Thank You & Q&A">
+          <div class="closing-kicker rv">Part ? · The End</div>
+          <h2 class="closing-title rv d1">Don’t guess your commute.<br />Measure it.</h2>
+          <p class="closing-sub rv d2">Wait — we didn’t list a Part IV at the start... because the best presentation ends on time, just like a well-chosen commute.</p>
+
+          <div class="closing-pills rv d3">
+            <div class="closing-pill"><span class="mode-dot walk"></span>&lt; 500 m → Walk</div>
+            <div class="closing-pill"><span class="mode-dot cycle"></span>Rush &amp; Cross-Campus → Cycle</div>
+            <div class="closing-pill"><span class="mode-dot shuttle"></span>Long Ring / Rain → Shuttle</div>
+          </div>
+
+          <div class="closing-credits rv d4">
+            <strong>Thank you for listening! Questions &amp; Discussion</strong><br />
+            Group 7 · Lin Shaoyang (Unknown) · Zhang Ruiming (Kibi) · Liu Shixuan (Karl) · SZU Yuehai Campus
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Persistent Editorial Footer -->
+      <footer class="deck-footer">
+        <div class="footer-left">
+          <span class="footer-brand-dot" id="footer-dot"></span>
+          <span class="footer-brand">Group 7 Presentation</span>
+          <span class="footer-sep">·</span>
+          <span>SZU Yuehai Campus</span>
+        </div>
+        <div class="footer-center" id="footer-section">Cover</div>
+        <div class="footer-right">
+          <span class="slide-counter" id="slide-counter">01 / 16</span>
+          <div class="nav-controls" aria-label="Slide navigation">
+            <button class="nav-btn" id="btn-prev" title="Previous (←)">‹</button>
+            <button class="nav-btn" id="btn-next" title="Next (→)">›</button>
+            <button class="nav-btn" id="btn-grid" title="Overview (G)">⊞</button>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Shared Interactive Tooltip -->
+  <div id="viz-tooltip" role="tooltip"></div>
+
+  <!-- Slide Overview Modal (Press G) -->
+  <div id="overview-modal" role="dialog" aria-modal="true" aria-label="Slide Overview">
+    <div class="overview-head">
+      <h2 style="font-family:var(--font-serif);font-size:24px;">All 16 Slides · Press Esc or click a slide to jump</h2>
+      <button class="nav-btn" id="btn-close-ov" style="width:34px;height:30px;font-size:16px;">✕</button>
+    </div>
+    <div class="overview-grid" id="overview-grid"></div>
+  </div>
+
+  <!-- Inline Data + App Scripts (self-contained after bundling) -->
+  <script src="deck_data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
